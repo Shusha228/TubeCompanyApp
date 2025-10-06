@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-
+using backend.Models.Entities;
 namespace backend.Models.Entities
 {
     public class Order
@@ -17,24 +17,5 @@ namespace backend.Models.Entities
         public string Status { get; set; } = "Pending";
         public bool AdminNotified { get; set; } = false;
     }
-
-    public class CartItem
-    {
-        public int ProductId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public decimal Quantity { get; set; }
-        public bool IsInMeters { get; set; } = true;
-        public decimal FinalPrice { get; set; }
-        public decimal UnitPrice { get; set; }
-    }
     
-    
-    public class CustomerInfo
-    {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Inn { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-    }
 }
