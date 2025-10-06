@@ -6,11 +6,11 @@ namespace backend.Models.Entities
     {
         [Key]
         public int ID { get; set; }
-        public int IDCat { get; set; }
-        public int IDType { get; set; }
+        public string IDCat { get; set; } = string.Empty;
+        public int IDType { get; set; } // Оставляем как int
         public string IDTypeNew { get; set; } = string.Empty;
         public string ProductionType { get; set; } = string.Empty;
-        public int? IDFunctionType { get; set; }
+        public string IDFunctionType { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Gost { get; set; } = string.Empty;
         public string FormOfLength { get; set; } = string.Empty;
