@@ -11,41 +11,68 @@ namespace backend.Services
 
     public class TelegramService : ITelegramService
     {
-        private readonly TelegramBotClient _botClient;
-        private readonly string _baseUrl;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<TelegramService> _logger;
 
-        public TelegramService(IConfiguration configuration)
+        public TelegramService(IConfiguration configuration, ILogger<TelegramService> logger)
         {
-            var botToken = configuration["Telegram:BotToken"];
-            _botClient = new TelegramBotClient(botToken);
-            _baseUrl = configuration["App:BaseUrl"];
+            _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task HandleUpdateAsync(Update update)
         {
-            if (update.Message?.Text == "/start")
+            var botToken = _configuration["Telegram:BotToken"];
+            if (string.IsNullOrEmpty(botToken))
             {
-                var webAppUrl = $"{_baseUrl}/miniapp";
-                
-                var keyboard = new InlineKeyboardMarkup(new[]
-                {
-                    new[]
-                    {
-                        InlineKeyboardButton.WithWebApp(
-                            "🏭 Открыть каталог труб",
-                            new WebAppInfo { Url = webAppUrl }
-                        )
-                    }
-                });
+                _logger.LogError("Bot token is not configured");
+                return;
+            }
 
-                await _botClient.SendMessage(
-                    update.Message.Chat.Id,
-                    "🏭 Добро пожаловать в каталог трубной продукции!\n\n" +
-                    "Здесь вы можете:\n" +
-                    "• 📋 Просматривать каталог продукции\n" +
-                    "• 🔍 Фильтровать трубы по параметрам\n" +
-                    "• 🛒 Формировать заказы с автоматическими скидками\n" +
-                    "• 💰 Видеть актуальные цены и остатки");
+            var botClient = new TelegramBotClient(botToken);
+
+            try
+            {
+                // Обрабатываем сообщения
+                if (update.Message != null)
+                {
+                    _logger.LogInformation($"Received message from {update.Message.From?.FirstName}: {update.Message.Text}");
+
+                    if (update.Message.Text == "/start")
+                    {
+                        var baseUrl = _configuration["App:BaseUrl"];
+                        var webAppUrl = $"{baseUrl}/miniapp";
+                        
+                        _logger.LogInformation($"Sending start message with webapp URL: {webAppUrl}");
+
+                        var keyboard = new InlineKeyboardMarkup(new[]
+                        {
+                            new[]
+                            {
+                                InlineKeyboardButton.WithWebApp("🏭 Открыть каталог труб", webAppUrl)
+                            }
+                        });
+
+                        await botClient.SendMessage(
+                            chatId: update.Message.Chat.Id,
+                            text: "🏭 Добро пожаловать в каталог трубной продукции!\n\n" +
+                                  "Нажмите кнопку ниже чтобы открыть каталог:",
+                            replyMarkup: keyboard);
+
+                        _logger.LogInformation("Start message sent successfully");
+                    }
+                    else
+                    {
+                        // Ответ на любое другое сообщение
+                        await botClient.SendMessage(
+                            chatId: update.Message.Chat.Id,
+                            text: "Для начала работы отправьте /start");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling Telegram update");
             }
         }
     }
