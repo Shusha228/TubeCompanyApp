@@ -12,6 +12,11 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole();
+    logging.AddDebug();
+});
 
 // CORS
 builder.Services.AddCors(options =>
@@ -144,6 +149,7 @@ app.MapGet("/webhook-info", async (IConfiguration configuration) =>
         return Results.Json(new { error = "Bot token not configured" });
 
     System.Console.Write(botToken);
+    
     try
     {
         using var httpClient = new HttpClient();

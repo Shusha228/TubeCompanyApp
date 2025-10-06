@@ -1,12 +1,8 @@
 ﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-# RUN dotnet tool install --global dotnet-ef
-# ENV PATH="$PATH:/root/.dotnet/tools"
-# Copy project file and restore dependencies
 COPY *.csproj .
 RUN dotnet restore
 
-# Copy everything else and build
 COPY . .
 # RUN dotnet ef migrations add InitialCreate
 RUN dotnet build -c Release --no-restore
@@ -16,11 +12,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Create data directory
 RUN mkdir -p /app/Data
 
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
-ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_ENVIRONMENT=Development
 
 ENTRYPOINT ["dotnet", "backend.dll"]
