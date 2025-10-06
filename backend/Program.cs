@@ -8,6 +8,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole();
+    logging.AddDebug();
+});
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -34,7 +40,6 @@ if (app.Environment.IsDevelopment())
     app.UseCors("AllowAll");
 }
 
-app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthorization();
 
@@ -128,7 +133,6 @@ app.MapGet("/webhook-info", async (IConfiguration configuration) =>
     if (string.IsNullOrEmpty(botToken))
         return Results.Json(new { error = "Bot token not configured" });
     
-    System.Console.Write(botToken);
     try
     {
         using var httpClient = new HttpClient();
