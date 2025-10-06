@@ -6,7 +6,10 @@ namespace backend.Models.Entities
     {
         [Key]
         public int ID { get; set; }
-        public int IDStock { get; set; }
+        
+        [Key]
+        public string IDStock { get; set; } = string.Empty; // Теперь string для хранения GUID
+        
         public decimal PriceT { get; set; }
         public decimal? PriceLimitT1 { get; set; }
         public decimal? PriceT1 { get; set; }

@@ -16,7 +16,6 @@ namespace backend.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // ProductType
             modelBuilder.Entity<ProductType>(entity =>
             {
                 entity.HasKey(e => e.IDType);
@@ -24,6 +23,10 @@ namespace backend.Data
                     .IsRequired()
                     .HasMaxLength(200);
                 entity.Property(e => e.IDParentType)
+                    .HasMaxLength(36)
+                    .IsRequired(false);
+                entity.Property(e => e.OriginalGuid)
+                    .HasMaxLength(36)
                     .IsRequired(false);
             });
 
@@ -56,7 +59,7 @@ namespace backend.Data
                 entity.Property(e => e.Koef)
                     .HasColumnType("decimal(10,6)");
                 
-                // Связь с ProductType
+                // Связь с ProductType - теперь типы совместимы (int -> int)
                 entity.HasOne<ProductType>()
                     .WithMany()
                     .HasForeignKey(e => e.IDType)
@@ -107,6 +110,10 @@ namespace backend.Data
             {
                 entity.HasKey(e => new { e.ID, e.IDStock });
                 
+                entity.Property(e => e.IDStock)
+                    .IsRequired()
+                    .HasMaxLength(36); // GUID обычно 36 символов
+                
                 entity.Property(e => e.PriceT)
                     .HasColumnType("decimal(18,2)");
                 entity.Property(e => e.PriceT1)
@@ -144,7 +151,7 @@ namespace backend.Data
                     .HasForeignKey(e => e.ID)
                     .OnDelete(DeleteBehavior.Restrict);
                 
-                // Связь с Stock
+                // Связь с Stock (теперь по строковому GUID)
                 entity.HasOne<Stock>()
                     .WithMany()
                     .HasForeignKey(e => e.IDStock)
@@ -155,6 +162,10 @@ namespace backend.Data
             modelBuilder.Entity<Remnant>(entity =>
             {
                 entity.HasKey(e => new { e.ID, e.IDStock });
+                
+                entity.Property(e => e.IDStock)
+                    .IsRequired()
+                    .HasMaxLength(36); // Добавлено для строкового GUID
                 
                 entity.Property(e => e.InStockT)
                     .HasColumnType("decimal(18,2)");
@@ -183,7 +194,7 @@ namespace backend.Data
                     .HasForeignKey(e => e.ID)
                     .OnDelete(DeleteBehavior.Restrict);
                 
-                // Связь с Stock
+                // Связь с Stock (теперь по строковому GUID)
                 entity.HasOne<Stock>()
                     .WithMany()
                     .HasForeignKey(e => e.IDStock)

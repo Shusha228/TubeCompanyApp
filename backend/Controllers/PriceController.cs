@@ -84,7 +84,7 @@ namespace backend.Controllers
         [SwaggerResponse(404, "Цена не найдена")]
         public async Task<ActionResult<Price>> GetPrice(
             [SwaggerParameter("ID товара из номенклатуры", Required = true)] int productId,
-            [SwaggerParameter("ID склада", Required = true)] int stockId)
+            [SwaggerParameter("ID склада", Required = true)] string stockId) // ИЗМЕНЕНО: int → string
         {
             var price = await _context.Prices
                 .FirstOrDefaultAsync(p => p.ID == productId && p.IDStock == stockId);
@@ -120,7 +120,7 @@ namespace backend.Controllers
         )]
         [SwaggerResponse(200, "Список цен на складе", typeof(List<Price>))]
         public async Task<ActionResult<List<Price>>> GetStockPrices(
-            [SwaggerParameter("ID склада", Required = true)] int stockId)
+            [SwaggerParameter("ID склада", Required = true)] string stockId) // ИЗМЕНЕНО: int → string
         {
             var prices = await _context.Prices
                 .Where(p => p.IDStock == stockId)
@@ -140,7 +140,7 @@ namespace backend.Controllers
         [SwaggerResponse(500, "Ошибка при обновлении в базе данных")]
         public async Task<IActionResult> UpdatePrice(
             [SwaggerParameter("ID товара из номенклатуры", Required = true)] int productId,
-            [SwaggerParameter("ID склада", Required = true)] int stockId,
+            [SwaggerParameter("ID склада", Required = true)] string stockId, // ИЗМЕНЕНО: int → string
             [SwaggerParameter("Данные для обновления цены", Required = true)] [FromBody] UpdatePriceRequest request)
         {
             if (!ModelState.IsValid)
@@ -190,7 +190,7 @@ namespace backend.Controllers
         [SwaggerResponse(500, "Ошибка при обновлении в базе данных")]
         public async Task<IActionResult> PatchPrice(
             [SwaggerParameter("ID товара из номенклатуры", Required = true)] int productId,
-            [SwaggerParameter("ID склада", Required = true)] int stockId,
+            [SwaggerParameter("ID склада", Required = true)] string stockId, // ИЗМЕНЕНО: int → string
             [SwaggerParameter("Словарь полей для обновления", Required = true)] [FromBody] Dictionary<string, object> updates)
         {
             var price = await _context.Prices
@@ -290,7 +290,7 @@ namespace backend.Controllers
             
             [SwaggerParameter("ID склада", Required = true)]
             [Required]
-            public int StockId { get; set; }
+            public string StockId { get; set; } = string.Empty; // ИЗМЕНЕНО: int → string
         }
     }
 }
