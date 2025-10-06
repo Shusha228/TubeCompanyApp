@@ -38,7 +38,7 @@ namespace backend.Services
             
             try
             {
-                var orderItems = new List<CartItem>();
+                var orderItems = new List<OrderCartItem>(); // Исправлено на OrderCartItem
                 
                 foreach (var requestItem in request.Items)
                 {
@@ -51,7 +51,7 @@ namespace backend.Services
                     
                     var product = await _productService.GetProductByIdAsync(requestItem.ProductId);
                     
-                    var cartItem = new CartItem
+                    var orderItem = new OrderCartItem // Исправлено на OrderCartItem
                     {
                         ProductId = requestItem.ProductId,
                         ProductName = product?.Name ?? "Неизвестный товар",
@@ -61,7 +61,7 @@ namespace backend.Services
                         UnitPrice = priceResponse.FinalPrice / requestItem.Quantity
                     };
 
-                    orderItems.Add(cartItem);
+                    orderItems.Add(orderItem);
                 }
 
                 var totalAmount = orderItems.Sum(i => i.FinalPrice);
@@ -89,7 +89,7 @@ namespace backend.Services
 
                 await transaction.CommitAsync();
                 
-                _logger.LogInformation($"Order created successfully: {order.Id}");
+                _logger.LogInformation("Order created successfully: {OrderId}", order.Id);
                 return order;
             }
             catch (Exception ex)
@@ -115,5 +115,20 @@ namespace backend.Services
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
         }
+    }
+
+    // DTO классы
+    public class CreateOrderRequest
+    {
+        public long TelegramUserId { get; set; }
+        public CustomerInfo CustomerInfo { get; set; } = new CustomerInfo();
+        public List<OrderItemRequest> Items { get; set; } = new List<OrderItemRequest>();
+    }
+
+    public class OrderItemRequest
+    {
+        public int ProductId { get; set; }
+        public decimal Quantity { get; set; }
+        public bool IsInMeters { get; set; } = true;
     }
 }
