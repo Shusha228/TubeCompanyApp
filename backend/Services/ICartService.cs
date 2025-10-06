@@ -7,195 +7,205 @@ namespace backend.Services
 {
     public interface ICartService
     {
-        Task<List<CartItem>> GetCartItemsAsync(int userId);
-        Task<CartItem?> GetCartItemAsync(int userId, int productId);
-        Task AddToCartAsync(int userId, int productId, decimal quantity, bool isInMeters = true);
-        Task<bool> UpdateCartItemAsync(int userId, int productId, decimal quantity);
+        Task<CartItem> AddToCartAsync(int userId, int productId, string productName, decimal quantity, bool isInMeters, decimal unitPrice, decimal finalPrice);
         Task<bool> RemoveFromCartAsync(int userId, int productId);
         Task ClearCartAsync(int userId);
-        Task<CartSummaryResponse> GetCartSummaryAsync(int userId);
-        Task<Order> MoveCartToOrderAsync(int userId, CustomerInfo customerInfo);
+        Task<List<CartItem>> GetCartItemsAsync(int userId);
+        Task<CartItem?> UpdateCartItemQuantityAsync(int userId, int productId, decimal newQuantity);
+        Task<decimal> GetCartTotalAsync(int userId);
+        Task<int> GetCartItemsCountAsync(int userId);
     }
-
     public class CartService : ICartService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IProductService _productService;
-        private readonly IOrderService _orderService;
         private readonly ILogger<CartService> _logger;
 
-        public CartService(
-            ApplicationDbContext context,
-            IProductService productService,
-            IOrderService orderService,
-            ILogger<CartService> logger)
+        public CartService(ApplicationDbContext context, ILogger<CartService> logger)
         {
             _context = context;
-            _productService = productService;
-            _orderService = orderService;
             _logger = logger;
         }
 
-        public async Task<List<CartItem>> GetCartItemsAsync(int userId)
+        public async Task<CartItem> AddToCartAsync(int userId, int productId, string productName, decimal quantity, bool isInMeters, decimal unitPrice, decimal finalPrice)
         {
-            return await _context.CartItems
-                .Where(ci => ci.UserId == userId)
-                .Include(ci => ci.Product)
-                .ToListAsync();
-        }
-
-        public async Task<CartItem?> GetCartItemAsync(int userId, int productId)
-        {
-            return await _context.CartItems
-                .Include(ci => ci.Product)
-                .FirstOrDefaultAsync(ci => ci.UserId == userId && ci.ProductId == productId);
-        }
-
-        public async Task AddToCartAsync(int userId, int productId, decimal quantity, bool isInMeters = true)
-        {
-            var existingItem = await GetCartItemAsync(userId, productId);
-
-            if (existingItem != null)
+            try
             {
-                existingItem.Quantity = quantity;
-                existingItem.IsInMeters = isInMeters;
-                existingItem.UpdatedAt = DateTime.UtcNow;
-                await UpdateCartItemPrices(existingItem);
-                _logger.LogInformation("Updated existing cart item for user {UserId}, product {ProductId}", userId, productId);
-            }
-            else
-            {
-                var product = await _productService.GetProductByIdAsync(productId);
-                if (product == null)
+                var existingItem = await _context.CartItems
+                    .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == productId);
+
+                if (existingItem != null)
                 {
-                    throw new ArgumentException($"Product {productId} not found");
+                    // Обновляем существующий товар
+                    existingItem.Quantity += quantity;
+                    existingItem.FinalPrice = finalPrice;
+                    existingItem.UnitPrice = unitPrice;
+                    existingItem.UpdatedAt = DateTime.UtcNow;
+
+                    _context.CartItems.Update(existingItem);
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogInformation($"Updated cart item for user {userId}, product {productId}, new quantity: {existingItem.Quantity}");
+                    return existingItem;
                 }
-
-                var priceRequest = new backend.Models.PriceCalculationRequest
+                else
                 {
-                    ProductId = productId,
-                    Quantity = quantity,
-                    IsInMeters = isInMeters
-                };
-                var priceResponse = await _productService.CalculatePriceAsync(priceRequest);
+                    // Добавляем новый товар
+                    var cartItem = new CartItem
+                    {
+                        UserId = userId,
+                        ProductId = productId,
+                        ProductName = productName,
+                        Quantity = quantity,
+                        IsInMeters = isInMeters,
+                        UnitPrice = unitPrice,
+                        FinalPrice = finalPrice,
+                        AddedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
 
-                // ИСПРАВЬ ЭТИ СТРОКИ - используй правильные свойства из backend.Models.PriceCalculationResponse
-                var cartItem = new CartItem
-                {
-                    UserId = userId,
-                    ProductId = productId,
-                    ProductName = product.Name,
-                    Quantity = quantity,
-                    IsInMeters = isInMeters,
-                    UnitPrice = priceResponse.FinalPrice / quantity, // РАССЧИТЫВАЕМ UnitPrice
-                    FinalPrice = priceResponse.FinalPrice,
-                    AddedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
+                    _context.CartItems.Add(cartItem);
+                    await _context.SaveChangesAsync();
 
-                _context.CartItems.Add(cartItem);
-                _logger.LogInformation("Added new cart item for user {UserId}, product {ProductId}", userId, productId);
+                    _logger.LogInformation($"Added new cart item for user {userId}, product {productId}, quantity: {quantity}");
+                    return cartItem;
+                }
             }
-
-            await _context.SaveChangesAsync();
-        }
-        public async Task<bool> UpdateCartItemAsync(int userId, int productId, decimal quantity)
-        {
-            var cartItem = await GetCartItemAsync(userId, productId);
-            if (cartItem == null) return false;
-
-            cartItem.Quantity = quantity;
-            cartItem.UpdatedAt = DateTime.UtcNow;
-            await UpdateCartItemPrices(cartItem);
-            await _context.SaveChangesAsync();
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error adding to cart for user {userId}, product {productId}");
+                throw;
+            }
         }
 
         public async Task<bool> RemoveFromCartAsync(int userId, int productId)
         {
-            var cartItem = await GetCartItemAsync(userId, productId);
-            if (cartItem == null) return false;
+            try
+            {
+                var cartItem = await _context.CartItems
+                    .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == productId);
 
-            _context.CartItems.Remove(cartItem);
-            await _context.SaveChangesAsync();
-            return true;
+                if (cartItem == null)
+                {
+                    return false;
+                }
+
+                _context.CartItems.Remove(cartItem);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Removed cart item for user {userId}, product {productId}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error removing from cart for user {userId}, product {productId}");
+                throw;
+            }
         }
 
         public async Task ClearCartAsync(int userId)
         {
-            var cartItems = await GetCartItemsAsync(userId);
-            _context.CartItems.RemoveRange(cartItems);
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Cleared cart for user {UserId}, removed {Count} items", userId, cartItems.Count);
-        }
-
-        public async Task<CartSummaryResponse> GetCartSummaryAsync(int userId)
-        {
-            var cartItems = await GetCartItemsAsync(userId);
-            return new CartSummaryResponse
+            try
             {
-                UserId = userId,
-                TotalItems = cartItems.Count,
-                TotalAmount = cartItems.Sum(ci => ci.FinalPrice)
-            };
-        }
+                var cartItems = await _context.CartItems
+                    .Where(c => c.UserId == userId)
+                    .ToListAsync();
 
-        public async Task<Order> MoveCartToOrderAsync(int userId, CustomerInfo customerInfo)
-        {
-            var cartItems = await GetCartItemsAsync(userId);
-            if (!cartItems.Any()) throw new InvalidOperationException("Cart is empty");
-
-            // Используем OrderCreateRequest из backend.Services
-            var orderRequest = new OrderCreateRequest
-            {
-                TelegramUserId = userId,
-                CustomerInfo = customerInfo,
-                Items = cartItems.Select(ci => new OrderItemRequest
+                if (cartItems.Any())
                 {
-                    ProductId = ci.ProductId,
-                    Quantity = ci.Quantity,
-                    IsInMeters = ci.IsInMeters
-                }).ToList()
-            };
+                    _context.CartItems.RemoveRange(cartItems);
+                    await _context.SaveChangesAsync();
 
-            var order = await _orderService.CreateOrderAsync(orderRequest);
-            await ClearCartAsync(userId);
-            return order;
-        }
-
-        private async Task UpdateCartItemPrices(CartItem cartItem)
-        {
-            // Используем backend.Models.PriceCalculationRequest
-            var priceRequest = new backend.Models.PriceCalculationRequest
+                    _logger.LogInformation($"Cleared cart for user {userId}, removed {cartItems.Count} items");
+                }
+            }
+            catch (Exception ex)
             {
-                ProductId = cartItem.ProductId,
-                Quantity = cartItem.Quantity,
-                IsInMeters = cartItem.IsInMeters
-            };
-            var priceResponse = await _productService.CalculatePriceAsync(priceRequest);
-            cartItem.UnitPrice = priceResponse.UnitPrice;
-            cartItem.FinalPrice = priceResponse.FinalPrice;
+                _logger.LogError(ex, $"Error clearing cart for user {userId}");
+                throw;
+            }
         }
-    }
 
-    public class CartSummaryResponse
-    {
-        public int UserId { get; set; }
-        public int TotalItems { get; set; }
-        public decimal TotalAmount { get; set; }
-    }
+        public async Task<List<CartItem>> GetCartItemsAsync(int userId)
+        {
+            try
+            {
+                return await _context.CartItems
+                    .Where(c => c.UserId == userId)
+                    .OrderByDescending(c => c.AddedAt)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting cart items for user {userId}");
+                throw;
+            }
+        }
 
-    public class OrderCreateRequest
-    {
-        public long TelegramUserId { get; set; }
-        public CustomerInfo CustomerInfo { get; set; } = new CustomerInfo();
-        public List<OrderItemRequest> Items { get; set; } = new List<OrderItemRequest>();
-    }
+        public async Task<CartItem?> UpdateCartItemQuantityAsync(int userId, int productId, decimal newQuantity)
+        {
+            try
+            {
+                var cartItem = await _context.CartItems
+                    .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == productId);
 
-    public class OrderItemRequest
-    {
-        public int ProductId { get; set; }
-        public decimal Quantity { get; set; }
-        public bool IsInMeters { get; set; } = true;
+                if (cartItem == null)
+                {
+                    return null;
+                }
+
+                if (newQuantity <= 0)
+                {
+                    // Если количество <= 0, удаляем товар из корзины
+                    await RemoveFromCartAsync(userId, productId);
+                    return null;
+                }
+
+                // Пересчитываем цену на основе нового количества
+                cartItem.Quantity = newQuantity;
+                cartItem.FinalPrice = cartItem.UnitPrice * newQuantity;
+                cartItem.UpdatedAt = DateTime.UtcNow;
+
+                _context.CartItems.Update(cartItem);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Updated cart item quantity for user {userId}, product {productId}, new quantity: {newQuantity}");
+                return cartItem;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating cart item quantity for user {userId}, product {productId}");
+                throw;
+            }
+        }
+
+        public async Task<decimal> GetCartTotalAsync(int userId)
+        {
+            try
+            {
+                return await _context.CartItems
+                    .Where(c => c.UserId == userId)
+                    .SumAsync(c => c.FinalPrice);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error calculating cart total for user {userId}");
+                throw;
+            }
+        }
+
+        public async Task<int> GetCartItemsCountAsync(int userId)
+        {
+            try
+            {
+                return await _context.CartItems
+                    .Where(c => c.UserId == userId)
+                    .CountAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting cart items count for user {userId}");
+                throw;
+            }
+        }
     }
 }

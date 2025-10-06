@@ -52,7 +52,7 @@ builder.Services.AddScoped<StockImporter>();
 builder.Services.AddScoped<ProductTypeImporter>();
 builder.Services.AddScoped<RemnantImporter>();
 builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
-
+builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddSingleton<ITelegramBotClient>(provider =>
 {
     var configuration = provider.GetRequiredService<IConfiguration>();

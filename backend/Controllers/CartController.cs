@@ -1,16 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using backend.Models.Entities;
 using backend.Services;
-using System.ComponentModel.DataAnnotations;
+using backend.Models.Entities;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace backend.Controllers
 {
+    /// <summary>
+    /// API для управления корзиной покупок
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    [SwaggerTag("Управление корзиной пользователя")]
+    [SwaggerTag("Управление корзиной покупок - добавление, удаление, обновление товаров")]
     public class CartController : ControllerBase
     {
         private readonly ICartService _cartService;
@@ -23,238 +24,263 @@ namespace backend.Controllers
         }
 
         /// <summary>
-        /// DTO для добавления товара в корзину
+        /// Получить содержимое корзины пользователя
         /// </summary>
-        public class AddToCartRequest
+        /// <param name="userId">ID пользователя</param>
+        /// <returns>Список товаров в корзине</returns>
+        [HttpGet("{userId}")]
+        [SwaggerOperation(Summary = "Получить корзину пользователя", Description = "Возвращает все товары в корзине указанного пользователя")]
+        [SwaggerResponse(200, "Корзина получена", typeof(List<CartItem>))]
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult<List<CartItem>>> GetCart(
+            [SwaggerParameter("ID пользователя", Required = true)] int userId)
         {
-            [SwaggerParameter("ID пользователя", Required = true)]
-            [Required]
-            public int UserId { get; set; }
-
-            [SwaggerParameter("ID товара", Required = true)]
-            [Required]
-            public int ProductId { get; set; }
-
-            [SwaggerParameter("Количество", Required = true)]
-            [Required]
-            [Range(0.01, double.MaxValue, ErrorMessage = "Quantity must be greater than 0")]
-            public decimal Quantity { get; set; }
-
-            [SwaggerParameter("В метрах (true) или тоннах (false)")]
-            public bool IsInMeters { get; set; } = true;
+            try
+            {
+                var cartItems = await _cartService.GetCartItemsAsync(userId);
+                return Ok(cartItems);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting cart for user {userId}");
+                return StatusCode(500, "Ошибка при получении корзины");
+            }
         }
 
         /// <summary>
-        /// DTO для обновления количества товара в корзине
+        /// Добавить товар в корзину
         /// </summary>
-        public class UpdateCartItemRequest
-        {
-            [SwaggerParameter("Новое количество", Required = true)]
-            [Required]
-            [Range(0.01, double.MaxValue, ErrorMessage = "Quantity must be greater than 0")]
-            public decimal Quantity { get; set; }
-        }
-
-        [HttpGet("{userId}")]
-        [SwaggerOperation(
-            Summary = "Получить содержимое корзины пользователя",
-            Description = "Возвращает все товары в корзине указанного пользователя"
-        )]
-        [SwaggerResponse(200, "Корзина пользователя", typeof(List<CartItem>))]
-        public async Task<ActionResult<List<CartItem>>> GetCart(int userId)
-        {
-            _logger.LogInformation("Getting cart for user {UserId}", userId);
-
-            var cartItems = await _cartService.GetCartItemsAsync(userId);
-
-            _logger.LogInformation("Found {Count} items in cart for user {UserId}", cartItems.Count, userId);
-            return Ok(cartItems);
-        }
-
-        [HttpPost("add")]
-        [SwaggerOperation(
-            Summary = "Добавить товар в корзину",
-            Description = "Добавляет товар в корзину пользователя или обновляет количество если товар уже есть"
-        )]
-        [SwaggerResponse(200, "Товар добавлен в корзину")]
+        /// <param name="userId">ID пользователя</param>
+        /// <param name="request">Данные товара для добавления</param>
+        /// <returns>Добавленный товар в корзине</returns>
+        [HttpPost("{userId}/items")]
+        [SwaggerOperation(Summary = "Добавить товар в корзину", Description = "Добавляет новый товар в корзину пользователя или обновляет количество существующего")]
+        [SwaggerResponse(200, "Товар добавлен в корзину", typeof(CartItem))]
         [SwaggerResponse(400, "Неверные данные запроса")]
-        public async Task<ActionResult> AddToCart([FromBody] AddToCartRequest request)
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult<CartItem>> AddToCart(
+            [SwaggerParameter("ID пользователя", Required = true)] int userId,
+            [SwaggerParameter("Данные товара для добавления", Required = true)]
+            [FromBody] AddToCartRequest request)
         {
-            _logger.LogInformation("Adding product {ProductId} to cart for user {UserId}", request.ProductId, request.UserId);
-
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning("Invalid model state for adding to cart");
-                return BadRequest(ModelState);
-            }
-
             try
             {
-                await _cartService.AddToCartAsync(request.UserId, request.ProductId, request.Quantity, request.IsInMeters);
-                
-                _logger.LogInformation("Product {ProductId} added to cart for user {UserId}", request.ProductId, request.UserId);
-                return Ok(new { message = "Product added to cart successfully" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error adding product {ProductId} to cart for user {UserId}", request.ProductId, request.UserId);
-                return StatusCode(500, new { message = "Error adding product to cart", error = ex.Message });
-            }
-        }
-
-        [HttpPut("{userId}/items/{productId}")]
-        [SwaggerOperation(
-            Summary = "Обновить количество товара в корзине",
-            Description = "Обновляет количество указанного товара в корзине пользователя"
-        )]
-        [SwaggerResponse(200, "Количество товара обновлено")]
-        [SwaggerResponse(404, "Товар не найден в корзине")]
-        public async Task<ActionResult> UpdateCartItem(int userId, int productId, [FromBody] UpdateCartItemRequest request)
-        {
-            _logger.LogInformation("Updating product {ProductId} quantity to {Quantity} for user {UserId}", 
-                productId, request.Quantity, userId);
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                var result = await _cartService.UpdateCartItemAsync(userId, productId, request.Quantity);
-
-                if (!result)
+                if (request.Quantity <= 0)
                 {
-                    _logger.LogWarning("Product {ProductId} not found in cart for user {UserId}", productId, userId);
-                    return NotFound(new { message = $"Product {productId} not found in cart" });
+                    return BadRequest("Количество должно быть больше 0");
                 }
 
-                _logger.LogInformation("Product {ProductId} quantity updated to {Quantity} for user {UserId}", 
-                    productId, request.Quantity, userId);
-                return Ok(new { message = "Cart item updated successfully" });
+                var cartItem = await _cartService.AddToCartAsync(
+                    userId, 
+                    request.ProductId, 
+                    request.ProductName, 
+                    request.Quantity, 
+                    request.IsInMeters, 
+                    request.UnitPrice, 
+                    request.FinalPrice
+                );
+
+                return Ok(cartItem);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating cart item for user {UserId}, product {ProductId}", userId, productId);
-                return StatusCode(500, new { message = "Error updating cart item" });
+                _logger.LogError(ex, $"Error adding to cart for user {userId}");
+                return StatusCode(500, "Ошибка при добавлении товара в корзину");
             }
         }
 
+        /// <summary>
+        /// Удалить товар из корзины
+        /// </summary>
+        /// <param name="userId">ID пользователя</param>
+        /// <param name="productId">ID товара</param>
+        /// <returns>Результат операции</returns>
         [HttpDelete("{userId}/items/{productId}")]
-        [SwaggerOperation(
-            Summary = "Удалить товар из корзины",
-            Description = "Удаляет указанный товар из корзины пользователя"
-        )]
-        [SwaggerResponse(200, "Товар удален из корзины")]
+        [SwaggerOperation(Summary = "Удалить товар из корзины", Description = "Удаляет конкретный товар из корзины пользователя")]
+        [SwaggerResponse(204, "Товар удален из корзины")]
         [SwaggerResponse(404, "Товар не найден в корзине")]
-        public async Task<ActionResult> RemoveFromCart(int userId, int productId)
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult> RemoveFromCart(
+            [SwaggerParameter("ID пользователя", Required = true)] int userId,
+            [SwaggerParameter("ID товара", Required = true)] int productId)
         {
-            _logger.LogInformation("Removing product {ProductId} from cart for user {UserId}", productId, userId);
-
             try
             {
                 var result = await _cartService.RemoveFromCartAsync(userId, productId);
-
+                
                 if (!result)
                 {
-                    _logger.LogWarning("Product {ProductId} not found in cart for user {UserId}", productId, userId);
-                    return NotFound(new { message = $"Product {productId} not found in cart" });
+                    return NotFound("Товар не найден в корзине");
                 }
 
-                _logger.LogInformation("Product {ProductId} removed from cart for user {UserId}", productId, userId);
-                return Ok(new { message = "Product removed from cart successfully" });
+                return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error removing product {ProductId} from cart for user {UserId}", productId, userId);
-                return StatusCode(500, new { message = "Error removing product from cart" });
+                _logger.LogError(ex, $"Error removing from cart for user {userId}, product {productId}");
+                return StatusCode(500, "Ошибка при удалении товара из корзины");
             }
         }
 
+        /// <summary>
+        /// Очистить корзину пользователя
+        /// </summary>
+        /// <param name="userId">ID пользователя</param>
+        /// <returns>Результат операции</returns>
         [HttpDelete("{userId}")]
-        [SwaggerOperation(
-            Summary = "Очистить корзину пользователя",
-            Description = "Удаляет все товары из корзины указанного пользователя"
-        )]
-        [SwaggerResponse(200, "Корзина очищена")]
-        public async Task<ActionResult> ClearCart(int userId)
+        [SwaggerOperation(Summary = "Очистить корзину", Description = "Полностью очищает корзину пользователя")]
+        [SwaggerResponse(204, "Корзина очищена")]
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult> ClearCart(
+            [SwaggerParameter("ID пользователя", Required = true)] int userId)
         {
-            _logger.LogInformation("Clearing cart for user {UserId}", userId);
-
             try
             {
                 await _cartService.ClearCartAsync(userId);
-                
-                _logger.LogInformation("Cart cleared for user {UserId}", userId);
-                return Ok(new { message = "Cart cleared successfully" });
+                return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error clearing cart for user {UserId}", userId);
-                return StatusCode(500, new { message = "Error clearing cart" });
+                _logger.LogError(ex, $"Error clearing cart for user {userId}");
+                return StatusCode(500, "Ошибка при очистке корзины");
             }
         }
 
-        [HttpGet("{userId}/summary")]
-        [SwaggerOperation(
-            Summary = "Получить сводку по корзине",
-            Description = "Возвращает общую информацию о корзине: количество товаров, общая сумма и т.д."
-        )]
-        [SwaggerResponse(200, "Сводка по корзине", typeof(CartSummaryResponse))]
-        public async Task<ActionResult<CartSummaryResponse>> GetCartSummary(int userId)
+        /// <summary>
+        /// Обновить количество товара в корзине
+        /// </summary>
+        /// <param name="userId">ID пользователя</param>
+        /// <param name="productId">ID товара</param>
+        /// <param name="request">Новое количество товара</param>
+        /// <returns>Обновленный товар в корзине</returns>
+        [HttpPut("{userId}/items/{productId}")]
+        [SwaggerOperation(Summary = "Обновить количество товара", Description = "Изменяет количество конкретного товара в корзине пользователя")]
+        [SwaggerResponse(200, "Количество обновлено", typeof(CartItem))]
+        [SwaggerResponse(400, "Неверное количество")]
+        [SwaggerResponse(404, "Товар не найден в корзине")]
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult<CartItem>> UpdateQuantity(
+            [SwaggerParameter("ID пользователя", Required = true)] int userId,
+            [SwaggerParameter("ID товара", Required = true)] int productId,
+            [SwaggerParameter("Новое количество товара", Required = true)]
+            [FromBody] UpdateQuantityRequest request)
         {
-            _logger.LogInformation("Getting cart summary for user {UserId}", userId);
-
-            var summary = await _cartService.GetCartSummaryAsync(userId);
-
-            _logger.LogInformation("Cart summary for user {UserId}: {TotalItems} items, {TotalAmount} total", 
-                userId, summary.TotalItems, summary.TotalAmount);
-            return Ok(summary);
-        }
-
-        [HttpPost("{userId}/move-to-order")]
-        [SwaggerOperation(
-            Summary = "Переместить корзину в заказ",
-            Description = "Создает заказ из текущей корзины и очищает корзину"
-        )]
-        [SwaggerResponse(200, "Заказ создан из корзины", typeof(Order))]
-        [SwaggerResponse(400, "Корзина пуста")]
-        public async Task<ActionResult<Order>> MoveCartToOrder(int userId, [FromBody] CustomerInfo customerInfo)
-        {
-            _logger.LogInformation("Moving cart to order for user {UserId}", userId);
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             try
             {
-                var order = await _cartService.MoveCartToOrderAsync(userId, customerInfo);
+                if (request.NewQuantity <= 0)
+                {
+                    return BadRequest("Количество должно быть больше 0");
+                }
+
+                var cartItem = await _cartService.UpdateCartItemQuantityAsync(userId, productId, request.NewQuantity);
                 
-                _logger.LogInformation("Order {OrderId} created from cart for user {UserId}", order.Id, userId);
-                return Ok(order);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("empty"))
-            {
-                _logger.LogWarning("Cannot create order from empty cart for user {UserId}", userId);
-                return BadRequest(new { message = "Cart is empty" });
+                if (cartItem == null)
+                {
+                    return NotFound("Товар не найден в корзине");
+                }
+
+                return Ok(cartItem);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error moving cart to order for user {UserId}", userId);
-                return StatusCode(500, new { message = "Error creating order from cart", error = ex.Message });
+                _logger.LogError(ex, $"Error updating quantity for user {userId}, product {productId}");
+                return StatusCode(500, "Ошибка при обновлении количества товара");
+            }
+        }
+
+        /// <summary>
+        /// Получить общую сумму корзины
+        /// </summary>
+        /// <param name="userId">ID пользователя</param>
+        /// <returns>Общая сумма корзины</returns>
+        [HttpGet("{userId}/total")]
+        [SwaggerOperation(Summary = "Получить сумму корзины", Description = "Рассчитывает и возвращает общую стоимость всех товаров в корзине")]
+        [SwaggerResponse(200, "Сумма корзины", typeof(decimal))]
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult<decimal>> GetCartTotal(
+            [SwaggerParameter("ID пользователя", Required = true)] int userId)
+        {
+            try
+            {
+                var total = await _cartService.GetCartTotalAsync(userId);
+                return Ok(total);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting cart total for user {userId}");
+                return StatusCode(500, "Ошибка при получении суммы корзины");
+            }
+        }
+
+        /// <summary>
+        /// Получить количество товаров в корзине
+        /// </summary>
+        /// <param name="userId">ID пользователя</param>
+        /// <returns>Количество товаров в корзине</returns>
+        [HttpGet("{userId}/count")]
+        [SwaggerOperation(Summary = "Получить количество товаров", Description = "Возвращает общее количество позиций в корзине пользователя")]
+        [SwaggerResponse(200, "Количество товаров", typeof(int))]
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult<int>> GetCartItemsCount(
+            [SwaggerParameter("ID пользователя", Required = true)] int userId)
+        {
+            try
+            {
+                var count = await _cartService.GetCartItemsCountAsync(userId);
+                return Ok(count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting cart items count for user {userId}");
+                return StatusCode(500, "Ошибка при получении количества товаров в корзине");
             }
         }
     }
 
     /// <summary>
-    /// DTO для сводки по корзине
+    /// Запрос на добавление товара в корзину
     /// </summary>
-    public class CartSummaryResponse
+    public class AddToCartRequest
     {
-        public int UserId { get; set; }
-        public int TotalItems { get; set; }
-        public decimal TotalAmount { get; set; }
+        /// <summary>
+        /// ID товара
+        /// </summary>
+        public int ProductId { get; set; }
+        
+        /// <summary>
+        /// Название товара
+        /// </summary>
+        public string ProductName { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Количество товара
+        /// </summary>
+        public decimal Quantity { get; set; }
+        
+        /// <summary>
+        /// Флаг измерения в метрах (true - метры, false - тонны)
+        /// </summary>
+        public bool IsInMeters { get; set; }
+        
+        /// <summary>
+        /// Цена за единицу
+        /// </summary>
+        public decimal UnitPrice { get; set; }
+        
+        /// <summary>
+        /// Итоговая цена
+        /// </summary>
+        public decimal FinalPrice { get; set; }
+    }
+
+    /// <summary>
+    /// Запрос на обновление количества товара
+    /// </summary>
+    public class UpdateQuantityRequest
+    {
+        /// <summary>
+        /// Новое количество товара
+        /// </summary>
+        public decimal NewQuantity { get; set; }
     }
 }
