@@ -3,6 +3,7 @@ import type { Panel } from "../../panels";
 
 export interface ActivePanel {
   activePanel: () => JSX.Element;
+  _activeObject: Panel;
   setActivePanel: (panel: Panel) => void;
 }
 
