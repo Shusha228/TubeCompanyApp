@@ -1,3 +1,4 @@
+import "./App.css";
 import { useActivePanel } from "./providers/active-panel";
 
 function App() {

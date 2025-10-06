@@ -1,6 +1,8 @@
 using backend.Services;
 using Telegram.Bot;
-
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
+using backend.Models.Entities;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
@@ -8,19 +10,22 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS for React frontend
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole();
+    logging.AddDebug();
+});
+
+// CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("ReactFrontend", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000", 
-                "https://localhost:3000",
-                "https://tiera-pivotal-marketta.ngrok-free.dev"
-            )
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
@@ -36,9 +41,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseCors("ReactFrontend");
+    app.UseCors("AllowAll");
 }
 
+
+app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthorization();
 
@@ -51,16 +58,23 @@ using (var scope = app.Services.CreateScope())
     await productService.LoadDataAsync();
 }
 
-// ========== API ENDPOINTS ==========
 
-// Health check
+// Применяем миграции
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();  // ← ЭТО РАБОТАЕТ БЕЗ dotnet ef
+}
+
+
+// Health check endpoint
 app.MapGet("/health", () => Results.Ok(new { 
     status = "Healthy", 
     timestamp = DateTime.UtcNow,
     service = "TubeCompanyApp Backend"
 }));
 
-// Test bot connection
+// Test endpoint for bot
 app.MapGet("/test-bot", async (IConfiguration configuration) =>
 {
     var botToken = configuration["Telegram:BotToken"];
@@ -69,7 +83,7 @@ app.MapGet("/test-bot", async (IConfiguration configuration) =>
     
     try
     {
-        var botClient = new TelegramBotClient(botToken);
+        var botClient = new Telegram.Bot.TelegramBotClient(botToken);
         var me = await botClient.GetMe();
         return Results.Json(new { 
             success = true, 
@@ -83,7 +97,7 @@ app.MapGet("/test-bot", async (IConfiguration configuration) =>
     }
 });
 
-// Setup webhook manually
+// Manual webhook setup endpoint
 app.MapGet("/setup-webhook", async (IConfiguration configuration) =>
 {
     var botToken = configuration["Telegram:BotToken"];
@@ -102,12 +116,23 @@ app.MapGet("/setup-webhook", async (IConfiguration configuration) =>
         
         var content = await response.Content.ReadAsStringAsync();
         
-        return Results.Json(new { 
-            success = response.IsSuccessStatusCode,
-            statusCode = (int)response.StatusCode,
-            webhookUrl = webhookUrl,
-            response = content
-        });
+        if (response.IsSuccessStatusCode)
+        {
+            return Results.Json(new { 
+                success = true, 
+                message = "Webhook set successfully",
+                webhookUrl = webhookUrl,
+                response = content
+            });
+        }
+        else
+        {
+            return Results.Json(new { 
+                error = "Failed to set webhook",
+                statusCode = response.StatusCode,
+                response = content
+            });
+        }
     }
     catch (Exception ex)
     {
@@ -119,19 +144,22 @@ app.MapGet("/setup-webhook", async (IConfiguration configuration) =>
 app.MapGet("/webhook-info", async (IConfiguration configuration) =>
 {
     var botToken = configuration["Telegram:BotToken"];
-    
+
     if (string.IsNullOrEmpty(botToken))
         return Results.Json(new { error = "Bot token not configured" });
+
+    System.Console.Write(botToken);
     
     try
     {
         using var httpClient = new HttpClient();
         var response = await httpClient.GetAsync(
             $"https://api.telegram.org/bot{botToken}/getWebhookInfo");
-        
+
         var content = await response.Content.ReadAsStringAsync();
-        
-        return Results.Json(new { 
+
+        return Results.Json(new
+        {
             success = true,
             response = content
         });
@@ -140,88 +168,6 @@ app.MapGet("/webhook-info", async (IConfiguration configuration) =>
     {
         return Results.Json(new { error = ex.Message });
     }
-});
-
-// Delete webhook
-app.MapGet("/delete-webhook", async (IConfiguration configuration) =>
-{
-    var botToken = configuration["Telegram:BotToken"];
-    
-    if (string.IsNullOrEmpty(botToken))
-        return Results.Json(new { error = "Bot token not configured" });
-    
-    try
-    {
-        using var httpClient = new HttpClient();
-        var response = await httpClient.GetAsync(
-            $"https://api.telegram.org/bot{botToken}/deleteWebhook");
-        
-        var content = await response.Content.ReadAsStringAsync();
-        
-        return Results.Json(new { 
-            success = response.IsSuccessStatusCode,
-            response = content
-        });
-    }
-    catch (Exception ex)
-    {
-        return Results.Json(new { error = ex.Message });
-    }
-});
-
-// Full diagnostics
-app.MapGet("/debug", async (IConfiguration configuration) =>
-{
-    var botToken = configuration["Telegram:BotToken"];
-    var baseUrl = configuration["App:BaseUrl"];
-    var results = new List<string>();
-    
-    // 1. Check token
-    if (string.IsNullOrEmpty(botToken))
-    {
-        results.Add("❌ Токен бота не настроен");
-        return Results.Json(new { errors = results });
-    }
-    results.Add("✅ Токен бота настроен");
-    
-    // 2. Check base URL
-    if (string.IsNullOrEmpty(baseUrl))
-    {
-        results.Add("❌ Base URL не настроен");
-    }
-    else
-    {
-        results.Add($"✅ Base URL: {baseUrl}");
-    }
-    
-    // 3. Check Telegram API connection
-    try
-    {
-        var botClient = new TelegramBotClient(botToken);
-        var me = await botClient.GetMe();
-        results.Add($"✅ Бот подключен: @{me.Username} ({me.FirstName})");
-    }
-    catch (Exception ex)
-    {
-        results.Add($"❌ Ошибка подключения к Telegram: {ex.Message}");
-    }
-    
-    // 4. Check webhook
-    try
-    {
-        using var client = new HttpClient();
-        var response = await client.GetStringAsync($"https://api.telegram.org/bot{botToken}/getWebhookInfo");
-        results.Add($"✅ Webhook info: {response}");
-    }
-    catch (Exception ex)
-    {
-        results.Add($"❌ Ошибка проверки webhook: {ex.Message}");
-    }
-    
-    return Results.Json(new { 
-        diagnostics = results,
-        timestamp = DateTime.UtcNow 
-    });
 });
 
 app.Run();
