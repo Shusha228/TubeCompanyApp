@@ -19,7 +19,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API для управления ценами на трубы"
     });
     
-    // Включаем поддержку атрибутов Swagger
     c.EnableAnnotations();
 });
 
@@ -42,7 +41,7 @@ builder.Services.AddCors(options =>
         .AllowAnyHeader();
     });
 });
-
+ 
 // Register services
 builder.Services.AddSingleton<ITelegramService, TelegramService>();
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -52,6 +51,7 @@ builder.Services.AddScoped<PriceImporter>();
 builder.Services.AddScoped<StockImporter>();
 builder.Services.AddScoped<ProductTypeImporter>();
 builder.Services.AddScoped<RemnantImporter>();
+builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
 
 builder.Services.AddSingleton<ITelegramBotClient>(provider =>
 {
@@ -65,6 +65,16 @@ builder.Services.AddSingleton<ITelegramBotClient>(provider =>
 });
 
 var app = builder.Build();
+
+app.MapGet("/setup-admin", async (IConfiguration configuration, ITelegramBotClient botClient) =>
+{
+    var adminChatIds = configuration.GetSection("Telegram:AdminChatIds").Get<List<long>>() ?? new List<long>();
+    
+    return Results.Json(new {
+        currentAdmins = adminChatIds,
+        instruction = "Отправьте боту команду /getchatid чтобы получить ваш Chat ID"
+    });
+});
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -87,13 +97,6 @@ using (var scope = app.Services.CreateScope())
     var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
     await productService.LoadDataAsync();
 }
-
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.Migrate();  // ← ЭТО РАБОТАЕТ БЕЗ dotnet ef
-}
-
 
 // Применяем миграции
 using (var scope = app.Services.CreateScope())

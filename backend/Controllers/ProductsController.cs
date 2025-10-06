@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using backend.Models;
+using backend.Models.Entities;
 using backend.Services;
 
 namespace backend.Controllers
@@ -44,7 +44,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("calculate-price")]
-        public async Task<ActionResult<PriceCalculationResponse>> CalculatePrice([FromBody] PriceCalculationRequest request)
+        public async Task<ActionResult<Models.PriceCalculationResponse>> CalculatePrice([FromBody] Models.PriceCalculationRequest request)
         {
             try
             {

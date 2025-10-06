@@ -1,5 +1,6 @@
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace backend.Services
@@ -13,27 +14,22 @@ namespace backend.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<TelegramService> _logger;
+        private readonly ITelegramBotClient _botClient;
 
-        public TelegramService(IConfiguration configuration, ILogger<TelegramService> logger)
+        public TelegramService(
+            IConfiguration configuration, 
+            ILogger<TelegramService> logger,
+            ITelegramBotClient botClient)
         {
             _configuration = configuration;
             _logger = logger;
+            _botClient = botClient;
         }
 
         public async Task HandleUpdateAsync(Update update)
         {
-            var botToken = _configuration["Telegram:BotToken"];
-            if (string.IsNullOrEmpty(botToken))
-            {
-                _logger.LogError("Bot token is not configured");
-                return;
-            }
-
-            var botClient = new TelegramBotClient(botToken);
-
             try
             {
-                // Обрабатываем сообщения
                 if (update.Message != null)
                 {
                     _logger.LogInformation($"Received message from {update.Message.From?.FirstName}: {update.Message.Text}");
@@ -53,7 +49,7 @@ namespace backend.Services
                             }
                         });
 
-                        await botClient.SendMessage(
+                        await _botClient.SendMessage(
                             chatId: update.Message.Chat.Id,
                             text: "🏭 Добро пожаловать в каталог трубной продукции!\n\n" +
                                   "Нажмите кнопку ниже чтобы открыть каталог:",
@@ -61,10 +57,19 @@ namespace backend.Services
 
                         _logger.LogInformation("Start message sent successfully");
                     }
+                    else if (update.Message.Text == "/getchatid")
+                    {
+                        var escapedChatId = EscapeMarkdownV2(update.Message.Chat.Id.ToString());
+                        
+                        await _botClient.SendMessage(
+                            chatId: update.Message.Chat.Id,
+                            text: $"🆔 Ваш Chat ID: `{escapedChatId}`\n\n" +
+                                  "Добавьте этот ID в appsettings\\.json в раздел AdminChatIds",
+                            parseMode: ParseMode.MarkdownV2);
+                    }
                     else
                     {
-                        // Ответ на любое другое сообщение
-                        await botClient.SendMessage(
+                        await _botClient.SendMessage(
                             chatId: update.Message.Chat.Id,
                             text: "Для начала работы отправьте /start");
                     }
@@ -74,6 +79,18 @@ namespace backend.Services
             {
                 _logger.LogError(ex, "Error handling Telegram update");
             }
+        }
+        
+        private string EscapeMarkdownV2(string text)
+        {
+            var charactersToEscape = new[] { '_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!' };
+            
+            foreach (var ch in charactersToEscape)
+            {
+                text = text.Replace(ch.ToString(), $"\\{ch}");
+            }
+            
+            return text;
         }
     }
 }

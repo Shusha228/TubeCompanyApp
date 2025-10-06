@@ -1,7 +1,7 @@
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using backend.Models;
+using backend.Models.Entities;
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -92,7 +92,7 @@ namespace backend.Services
         private string FormatNewOrderMessage(Order order)
         {
             var itemsText = string.Join("\n", order.Items.Select((item, index) =>
-                $"{index + 1}. {item.ProductName}\n" +
+                $"{index + 1}. {item}\n" +
                 $"   Количество: {item.Quantity} {(item.IsInMeters ? "м" : "т")}\n" +
                 $"   Цена за ед.: {item.UnitPrice:0.00} ₽\n" +
                 $"   Сумма: {item.FinalPrice:0.00} ₽"));

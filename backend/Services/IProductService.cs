@@ -1,4 +1,4 @@
-using backend.Models;
+using backend.Models.Entities;
 
 namespace backend.Services
 {
@@ -6,8 +6,9 @@ namespace backend.Services
     {
         Task<List<Product>> GetFilteredProductsAsync(ProductFilter filter);
         Task<FilterOptions> GetFilterOptionsAsync();
-        Task<PriceCalculationResponse> CalculatePriceAsync(PriceCalculationRequest request);
+        Task<Models.PriceCalculationResponse> CalculatePriceAsync(Models.PriceCalculationRequest request);
         Task LoadDataAsync();
+        Task<Product?> GetProductByIdAsync(int productId);
     }
 
     public class ProductService : IProductService
@@ -58,7 +59,7 @@ namespace backend.Services
             var products = await GetCombinedProductsAsync();
 
             return products.Where(p =>
-                (!filter.WarehouseId.HasValue || _stocks.Any(s => s.IDStock == filter.WarehouseId && s.StockName == p.Warehouse)) &&
+                (string.IsNullOrEmpty(filter.WarehouseId) || _stocks.Any(s => s.IDStock == filter.WarehouseId && s.StockName == p.Warehouse)) &&
                 (string.IsNullOrEmpty(filter.Type) || p.Type.Contains(filter.Type)) &&
                 (!filter.Diameter.HasValue || p.Diameter == filter.Diameter.Value) &&
                 (!filter.WallThickness.HasValue || p.WallThickness == filter.WallThickness.Value) &&
@@ -82,7 +83,7 @@ namespace backend.Services
             };
         }
 
-        public async Task<PriceCalculationResponse> CalculatePriceAsync(PriceCalculationRequest request)
+        public async Task<Models.PriceCalculationResponse> CalculatePriceAsync(Models.PriceCalculationRequest request)
         {
             var products = await GetCombinedProductsAsync();
             var product = products.FirstOrDefault(p => p.ID == request.ProductId);
@@ -129,7 +130,7 @@ namespace backend.Services
 
             var discountPercent = basePrice > 0 ? (basePrice - finalPrice) / basePrice * 100 : 0;
 
-            return new PriceCalculationResponse
+            return new Models.PriceCalculationResponse
             {
                 FinalPrice = finalPrice,
                 BasePrice = basePrice,
@@ -188,6 +189,12 @@ namespace backend.Services
             }
 
             return products;
+        }
+        
+        public async Task<Product?> GetProductByIdAsync(int productId)
+        {
+            var products = await GetCombinedProductsAsync();
+            return products.FirstOrDefault(p => p.ID == productId);
         }
     }
 }
