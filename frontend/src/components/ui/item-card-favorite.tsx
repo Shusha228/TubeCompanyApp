@@ -28,7 +28,10 @@ export const ItemCardForFavorite = () => {
         </ItemContent>
       </div>
 
-      <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98 w-full sm:w-auto cursor-pointer">
+      <Button
+        size="lg"
+        className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98 w-full sm:w-auto cursor-pointer"
+      >
         Добавить в корзину
       </Button>
       <DropdownMenu>
