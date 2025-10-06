@@ -166,7 +166,7 @@ export const MainPanel = () => {
   };
 
   return (
-    <div className="flex flex-col w-full bg-[#F3F3F3] h-max">
+    <div className="flex flex-col w-full h-auto bg-[#F3F3F3]">
       <div className="flex flex-col pt-6 gap-4 w-full bg-white rounded-b-[12px] pb-4.5">
         <div className="flex flex-col gap-2 w-full">
           <div className="flex w-full gap-2 px-2 md:px-4">
@@ -183,7 +183,7 @@ export const MainPanel = () => {
                 </Button>
               </DrawerTrigger>
               <DrawerContent>
-                <DrawerFooter>
+                <DrawerFooter className="min-h-[484px]">
                   <DrawerTitle className="text-start">Склад</DrawerTitle>
                   <div className="flex flex-col gap-2">
                     <InputGroup>
@@ -247,7 +247,7 @@ export const MainPanel = () => {
                       </div>
                     ))}
                   </div>
-                  <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-99">
+                  <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98">
                     Сохранить
                   </Button>
                   <DrawerClose>
@@ -328,7 +328,7 @@ export const MainPanel = () => {
       </div>
       <div className="w-full h-[10px]"></div>
       <div className="pb-18 bg-white rounded-t-[12px] w-full pt-2.5 md:pt-4.5">
-        <div className="grid lg:grid-cols-6 md:grid-cols-4 grid-cols-2 gap-2 px-2 md:px-4">
+        <div className="grid lg:grid-cols-6 md:grid-cols-4 grid-cols-2 gap-2 px-2 md:px-4 w-full">
           {[...Array(24).keys()].map((el) => (
             <ItemCard key={el} />
           ))}
