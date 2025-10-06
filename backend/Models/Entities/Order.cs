@@ -26,6 +26,8 @@ namespace backend.Models.Entities
         public bool IsInMeters { get; set; } = true;
         public decimal FinalPrice { get; set; }
         public decimal UnitPrice { get; set; }
+        public string StockId { get; set; }
+        public string Warehouse { get; set; } = string.Empty;
     }
     
     
