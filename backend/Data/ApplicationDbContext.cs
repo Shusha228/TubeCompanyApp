@@ -1,0 +1,260 @@
+using Microsoft.EntityFrameworkCore;
+using backend.Models.Entities;
+
+namespace backend.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+        public DbSet<ProductType> ProductTypes { get; set; }
+        public DbSet<Nomenclature> Nomenclatures { get; set; }
+        public DbSet<Price> Prices { get; set; }
+        public DbSet<Remnant> Remnants { get; set; }
+        public DbSet<Stock> Stocks { get; set; }
+        public DbSet<Order> Orders { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // ProductType
+            modelBuilder.Entity<ProductType>(entity =>
+            {
+                entity.HasKey(e => e.IDType);
+                entity.Property(e => e.Type)
+                    .IsRequired()
+                    .HasMaxLength(200);
+                entity.Property(e => e.IDParentType)
+                    .IsRequired(false);
+            });
+
+            // Nomenclature
+            modelBuilder.Entity<Nomenclature>(entity =>
+            {
+                entity.HasKey(e => e.ID);
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(500);
+                entity.Property(e => e.Gost)
+                    .HasMaxLength(200);
+                entity.Property(e => e.ProductionType)
+                    .HasMaxLength(100);
+                entity.Property(e => e.FormOfLength)
+                    .HasMaxLength(100);
+                entity.Property(e => e.Manufacturer)
+                    .HasMaxLength(200);
+                entity.Property(e => e.SteelGrade)
+                    .HasMaxLength(100);
+                entity.Property(e => e.Status)
+                    .HasMaxLength(50);
+                entity.Property(e => e.Diameter)
+                    .HasColumnType("decimal(10,2)");
+                entity.Property(e => e.ProfileSize2)
+                    .HasColumnType("decimal(10,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.PipeWallThickness)
+                    .HasColumnType("decimal(10,2)");
+                entity.Property(e => e.Koef)
+                    .HasColumnType("decimal(10,6)");
+                
+                // Связь с ProductType
+                entity.HasOne<ProductType>()
+                    .WithMany()
+                    .HasForeignKey(e => e.IDType)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Stock
+            modelBuilder.Entity<Stock>(entity =>
+            {
+                entity.HasKey(e => e.IDStock);
+                entity.Property(e => e.City)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                entity.Property(e => e.StockName)
+                    .IsRequired()
+                    .HasMaxLength(200);
+                entity.Property(e => e.Address)
+                    .HasMaxLength(500)
+                    .IsRequired(false);
+                entity.Property(e => e.Schedule)
+                    .HasMaxLength(200)
+                    .IsRequired(false);
+                entity.Property(e => e.FIASId)
+                    .HasMaxLength(50)
+                    .IsRequired(false);
+                entity.Property(e => e.OwnerInn)
+                    .HasMaxLength(20)
+                    .IsRequired(false);
+                entity.Property(e => e.OwnerKpp)
+                    .HasMaxLength(20)
+                    .IsRequired(false);
+                entity.Property(e => e.OwnerFullName)
+                    .HasMaxLength(500)
+                    .IsRequired(false);
+                entity.Property(e => e.OwnerShortName)
+                    .HasMaxLength(200)
+                    .IsRequired(false);
+                entity.Property(e => e.RailwayStation)
+                    .HasMaxLength(100)
+                    .IsRequired(false);
+                entity.Property(e => e.ConsigneeCode)
+                    .HasMaxLength(50)
+                    .IsRequired(false);
+            });
+
+            // Price (составной ключ)
+            modelBuilder.Entity<Price>(entity =>
+            {
+                entity.HasKey(e => new { e.ID, e.IDStock });
+                
+                entity.Property(e => e.PriceT)
+                    .HasColumnType("decimal(18,2)");
+                entity.Property(e => e.PriceT1)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.PriceT2)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.PriceM)
+                    .HasColumnType("decimal(18,2)");
+                entity.Property(e => e.PriceM1)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.PriceM2)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.PriceLimitT1)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.PriceLimitT2)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.PriceLimitM1)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.PriceLimitM2)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.NDS)
+                    .HasColumnType("decimal(5,2)");
+                
+                // Связь с Nomenclature
+                entity.HasOne<Nomenclature>()
+                    .WithMany()
+                    .HasForeignKey(e => e.ID)
+                    .OnDelete(DeleteBehavior.Restrict);
+                
+                // Связь с Stock
+                entity.HasOne<Stock>()
+                    .WithMany()
+                    .HasForeignKey(e => e.IDStock)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Remnant (составной ключ)
+            modelBuilder.Entity<Remnant>(entity =>
+            {
+                entity.HasKey(e => new { e.ID, e.IDStock });
+                
+                entity.Property(e => e.InStockT)
+                    .HasColumnType("decimal(18,2)");
+                entity.Property(e => e.InStockM)
+                    .HasColumnType("decimal(18,2)");
+                entity.Property(e => e.SoonArriveT)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.SoonArriveM)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.ReservedT)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.ReservedM)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired(false);
+                entity.Property(e => e.AvgTubeLength)
+                    .HasColumnType("decimal(10,2)");
+                entity.Property(e => e.AvgTubeWeight)
+                    .HasColumnType("decimal(10,2)");
+                
+                // Связь с Nomenclature
+                entity.HasOne<Nomenclature>()
+                    .WithMany()
+                    .HasForeignKey(e => e.ID)
+                    .OnDelete(DeleteBehavior.Restrict);
+                
+                // Связь с Stock
+                entity.HasOne<Stock>()
+                    .WithMany()
+                    .HasForeignKey(e => e.IDStock)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Order
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                
+                entity.Property(e => e.FirstName)
+                    .IsRequired()
+                    .HasMaxLength(50);
+                entity.Property(e => e.LastName)
+                    .IsRequired()
+                    .HasMaxLength(50);
+                entity.Property(e => e.Inn)
+                    .IsRequired()
+                    .HasMaxLength(20);
+                entity.Property(e => e.Phone)
+                    .IsRequired()
+                    .HasMaxLength(20);
+                entity.Property(e => e.Email)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                entity.Property(e => e.TotalAmount)
+                    .HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Status)
+                    .IsRequired()
+                    .HasMaxLength(20);
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired();
+                
+                // Owned types для CartItem
+                entity.OwnsMany(e => e.Items, owned =>
+                {
+                    owned.WithOwner();
+                    owned.Property(i => i.ProductId)
+                        .IsRequired();
+                    owned.Property(i => i.Quantity)
+                        .HasColumnType("decimal(18,2)")
+                        .IsRequired();
+                    owned.Property(i => i.FinalPrice)
+                        .HasColumnType("decimal(18,2)")
+                        .IsRequired();
+                    owned.Property(i => i.IsInMeters)
+                        .IsRequired();
+                });
+            });
+
+            // Индексы для оптимизации
+            modelBuilder.Entity<Nomenclature>()
+                .HasIndex(e => e.IDType)
+                .HasDatabaseName("IX_Nomenclature_IDType");
+                
+            modelBuilder.Entity<Price>()
+                .HasIndex(e => e.IDStock)
+                .HasDatabaseName("IX_Price_IDStock");
+                
+            modelBuilder.Entity<Remnant>()
+                .HasIndex(e => e.IDStock)
+                .HasDatabaseName("IX_Remnant_IDStock");
+                
+            modelBuilder.Entity<Order>()
+                .HasIndex(e => e.TelegramUserId)
+                .HasDatabaseName("IX_Order_TelegramUserId");
+                
+            modelBuilder.Entity<Order>()
+                .HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_Order_CreatedAt");
+        }
+    }
+}
