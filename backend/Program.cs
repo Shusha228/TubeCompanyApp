@@ -51,6 +51,18 @@ builder.Services.AddScoped<PriceImporter>();
 builder.Services.AddScoped<StockImporter>();
 builder.Services.AddScoped<ProductTypeImporter>();
 builder.Services.AddScoped<RemnantImporter>();
+
+builder.Services.AddSingleton<ITelegramBotClient>(provider =>
+{
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var botToken = configuration["Telegram:BotToken"];
+    
+    if (string.IsNullOrEmpty(botToken))
+        throw new InvalidOperationException("Telegram BotToken is not configured");
+    
+    return new TelegramBotClient(botToken);
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
