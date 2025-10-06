@@ -13,6 +13,7 @@ export const ActivePanelProvider = ({
   return (
     <ActivePanelContext.Provider
       value={{
+        _activeObject: panel,
         activePanel: activePanel,
         setActivePanel: setPanel,
       }}
