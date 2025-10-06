@@ -114,7 +114,7 @@ export const MainPanel = () => {
   const [category, setCategory] = useState<string>();
   const [activeCheckboxes, setActiveCheckBoxes] = useState<string[]>([]);
   const [citySearch, setCitySearch] = useState<string>("");
-  const [activeCity, setActiveCity] = useState<City>();
+  const [, setActiveCity] = useState<City>();
   const citySearchInput = useRef<HTMLInputElement>(null);
   const findedCities = useMemo(
     () =>
