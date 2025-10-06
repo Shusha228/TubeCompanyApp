@@ -1,12 +1,22 @@
 using backend.Services;
 using Telegram.Bot;
-
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
+using backend.Models.Entities;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole();
+    logging.AddDebug();
+});
 
 // CORS
 builder.Services.AddCors(options =>
@@ -34,6 +44,7 @@ if (app.Environment.IsDevelopment())
     app.UseCors("AllowAll");
 }
 
+
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthorization();
@@ -46,6 +57,15 @@ using (var scope = app.Services.CreateScope())
     var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
     await productService.LoadDataAsync();
 }
+
+
+// Применяем миграции
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();  // ← ЭТО РАБОТАЕТ БЕЗ dotnet ef
+}
+
 
 // Health check endpoint
 app.MapGet("/health", () => Results.Ok(new { 
@@ -124,20 +144,22 @@ app.MapGet("/setup-webhook", async (IConfiguration configuration) =>
 app.MapGet("/webhook-info", async (IConfiguration configuration) =>
 {
     var botToken = configuration["Telegram:BotToken"];
-    
+
     if (string.IsNullOrEmpty(botToken))
         return Results.Json(new { error = "Bot token not configured" });
-    
+
     System.Console.Write(botToken);
+    
     try
     {
         using var httpClient = new HttpClient();
         var response = await httpClient.GetAsync(
             $"https://api.telegram.org/bot{botToken}/getWebhookInfo");
-        
+
         var content = await response.Content.ReadAsStringAsync();
-        
-        return Results.Json(new { 
+
+        return Results.Json(new
+        {
             success = true,
             response = content
         });
