@@ -140,8 +140,8 @@
     padding: 0;
   
     overscroll-behavior-y: contain;
-    background: var(--base-color-base-01);
-    color: var(--text-color);
+    background: #FFFFFF;
+    color: #000
   }
   
   
