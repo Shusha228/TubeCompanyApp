@@ -32,6 +32,9 @@ namespace backend.Models.Entities
         
         public DateTime AddedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        
+        public string StockId { get; set; }
+        public string Warehouse { get; set; } = string.Empty;
 
         // Навигационное свойство
         public virtual Nomenclature? Product { get; set; }

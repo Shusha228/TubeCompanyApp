@@ -38,7 +38,7 @@ namespace backend.Services
 
             try
             {
-                var orderItems = new List<CartItem>();
+                var orderItems = new List<OrderCartItem>();
 
                 foreach (var requestItem in request.Items)
                 {
@@ -54,7 +54,7 @@ namespace backend.Services
 
                     var nomenclature = await _nomenclatureService.GetByIdAsync(requestItem.ProductId);
 
-                    var cartItem = new CartItem
+                    var cartItem = new OrderCartItem
                     {
                         ProductId = requestItem.ProductId,
                         ProductName = nomenclature?.Name ?? "Неизвестный товар",
@@ -62,8 +62,6 @@ namespace backend.Services
                         IsInMeters = requestItem.IsInMeters,
                         FinalPrice = priceResponse.FinalPrice,
                         UnitPrice = priceResponse.DiscountedUnitPrice,
-                        StockId = requestItem.StockId,
-                        Warehouse = priceResponse.AvailableStock > 0 ? "В наличии" : "Под заказ"
                     };
 
                     orderItems.Add(cartItem);
