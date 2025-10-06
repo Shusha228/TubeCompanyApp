@@ -1,12 +1,19 @@
 using backend.Services;
 using Telegram.Bot;
 
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
+using backend.Models.Entities;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // CORS for React frontend
 builder.Services.AddCors(options =>
@@ -49,6 +56,12 @@ using (var scope = app.Services.CreateScope())
 {
     var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
     await productService.LoadDataAsync();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();  // ← ЭТО РАБОТАЕТ БЕЗ dotnet ef
 }
 
 // ========== API ENDPOINTS ==========
