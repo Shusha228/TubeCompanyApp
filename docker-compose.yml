@@ -19,6 +19,19 @@ services:
       - tubecompany-network
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tubecompany-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - tubecompany-network
+    restart: unless-stopped
+
 networks:
   tubecompany-network:
     driver: bridge
