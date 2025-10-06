@@ -1,16 +1,53 @@
+using System.ComponentModel;
+using System.Text.Json.Serialization;
+
 namespace backend.Models
 {
-public class PriceCalculationRequest
-{
-    public int ProductId { get; set; }
-    public decimal Quantity { get; set; }
-    public bool IsInMeters { get; set; } = true;
-}
+    /// <summary>
+    /// Запрос на расчет стоимости
+    /// </summary>
+    public class PriceCalculationRequest
+    {
+        /// <summary>
+        /// ID номенклатуры
+        /// </summary>
+        [Description("ID номенклатуры")]
+        [JsonPropertyName("nomenclatureId")]
+        public int NomenclatureId { get; set; }
 
-public class PriceCalculationResponse
-{
-    public decimal FinalPrice { get; set; }
-    public decimal BasePrice { get; set; }
-    public decimal DiscountPercent { get; set; }
-}
+        /// <summary>
+        /// ID склада
+        /// </summary>
+        [Description("ID склада")]
+        [JsonPropertyName("stockId")]
+        public string StockId { get; set; }
+
+        /// <summary>
+        /// Количество
+        /// </summary>
+        [Description("Количество")]
+        [JsonPropertyName("quantity")]
+        public decimal Quantity { get; set; }
+
+        /// <summary>
+        /// true - расчет в метрах, false - в тоннах
+        /// </summary>
+        [Description("Единица измерения (true - метры, false - тонны)")]
+        [JsonPropertyName("isInMeters")]
+        public bool IsInMeters { get; set; } = true;
+
+        /// <summary>
+        /// Конвертировать в тонны (только если IsInMeters = true)
+        /// </summary>
+        [Description("Конвертировать в тонны")]
+        [JsonPropertyName("convertToTons")]
+        public bool ConvertToTons { get; set; } = false;
+
+        /// <summary>
+        /// Конвертировать в метры (только если IsInMeters = false)
+        /// </summary>
+        [Description("Конвертировать в метры")]
+        [JsonPropertyName("convertToMeters")]
+        public bool ConvertToMeters { get; set; } = false;
+    }
 }

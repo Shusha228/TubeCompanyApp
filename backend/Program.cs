@@ -44,7 +44,7 @@ builder.Services.AddCors(options =>
  
 // Register services
 builder.Services.AddSingleton<ITelegramService, TelegramService>();
-builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<INomenclatureService, NomenclatureService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<NomenclatureImporter>();
 builder.Services.AddScoped<PriceImporter>();
@@ -90,13 +90,6 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Initialize data
-using (var scope = app.Services.CreateScope())
-{
-    var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
-    await productService.LoadDataAsync();
-}
 
 // Применяем миграции
 using (var scope = app.Services.CreateScope())

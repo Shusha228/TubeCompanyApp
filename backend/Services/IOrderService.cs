@@ -16,18 +16,18 @@ namespace backend.Services
     public class OrderService : IOrderService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IProductService _productService;
+        private readonly INomenclatureService _nomenclatureService;
         private readonly ITelegramNotificationService _telegramNotificationService;
         private readonly ILogger<OrderService> _logger;
 
         public OrderService(
             ApplicationDbContext context,
-            IProductService productService,
+            INomenclatureService nomenclatureService,
             ITelegramNotificationService telegramNotificationService,
             ILogger<OrderService> logger)
         {
             _context = context;
-            _productService = productService;
+            _nomenclatureService = nomenclatureService;
             _telegramNotificationService = telegramNotificationService;
             _logger = logger;
         }
@@ -35,33 +35,36 @@ namespace backend.Services
         public async Task<Order> CreateOrderAsync(CreateOrderRequest request)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
-            
+
             try
             {
-                var orderItems = new List<OrderCartItem>(); // Исправлено на OrderCartItem
-                
+                var orderItems = new List<OrderCartItem>();
+
                 foreach (var requestItem in request.Items)
                 {
-                    var priceResponse = await _productService.CalculatePriceAsync(new PriceCalculationRequest
+                    var priceResponse = await _nomenclatureService.CalculatePriceAsync(new PriceCalculationRequest
                     {
-                        ProductId = requestItem.ProductId,
+                        NomenclatureId = requestItem.ProductId,
+                        StockId = requestItem.StockId,
                         Quantity = requestItem.Quantity,
-                        IsInMeters = requestItem.IsInMeters
+                        IsInMeters = requestItem.IsInMeters,
+                        ConvertToTons = false,
+                        ConvertToMeters = false
                     });
-                    
-                    var product = await _productService.GetProductByIdAsync(requestItem.ProductId);
-                    
-                    var orderItem = new OrderCartItem // Исправлено на OrderCartItem
+
+                    var nomenclature = await _nomenclatureService.GetByIdAsync(requestItem.ProductId);
+
+                    var cartItem = new OrderCartItem
                     {
                         ProductId = requestItem.ProductId,
-                        ProductName = product?.Name ?? "Неизвестный товар",
+                        ProductName = nomenclature?.Name ?? "Неизвестный товар",
                         Quantity = requestItem.Quantity,
                         IsInMeters = requestItem.IsInMeters,
                         FinalPrice = priceResponse.FinalPrice,
-                        UnitPrice = priceResponse.FinalPrice / requestItem.Quantity
+                        UnitPrice = priceResponse.DiscountedUnitPrice,
                     };
 
-                    orderItems.Add(orderItem);
+                    orderItems.Add(cartItem);
                 }
 
                 var totalAmount = orderItems.Sum(i => i.FinalPrice);
@@ -84,12 +87,12 @@ namespace backend.Services
 
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
-                
+
                 await _telegramNotificationService.NotifyAdminsAboutNewOrderAsync(order);
 
                 await transaction.CommitAsync();
-                
-                _logger.LogInformation("Order created successfully: {OrderId}", order.Id);
+
+                _logger.LogInformation($"Order created successfully: {order.Id}");
                 return order;
             }
             catch (Exception ex)
@@ -115,20 +118,5 @@ namespace backend.Services
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
         }
-    }
-
-    // DTO классы
-    public class CreateOrderRequest
-    {
-        public long TelegramUserId { get; set; }
-        public CustomerInfo CustomerInfo { get; set; } = new CustomerInfo();
-        public List<OrderItemRequest> Items { get; set; } = new List<OrderItemRequest>();
-    }
-
-    public class OrderItemRequest
-    {
-        public int ProductId { get; set; }
-        public decimal Quantity { get; set; }
-        public bool IsInMeters { get; set; } = true;
     }
 }
