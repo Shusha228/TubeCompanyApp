@@ -1,14 +1,13 @@
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 
-namespace backend.Models.Telegram
+namespace backend.Models.DTOs.Telegram
 {
-    public class CreateTelegramUserRequest
+    /// <summary>
+    /// Запрос на обновление пользователя
+    /// </summary>
+    public class UpdateTelegramUserRequest
     {
-        [Description("ID пользователя в Telegram")]
-        [JsonPropertyName("telegramUserId")]
-        public long TelegramUserId { get; set; }
-
         [Description("Имя")]
         [JsonPropertyName("firstName")]
         public string FirstName { get; set; } = string.Empty;
@@ -32,5 +31,9 @@ namespace backend.Models.Telegram
         [Description("Username в Telegram")]
         [JsonPropertyName("username")]
         public string? Username { get; set; }
+
+        [Description("Статус")]
+        [JsonPropertyName("status")]
+        public string Status { get; set; } = "Active";
     }
 }

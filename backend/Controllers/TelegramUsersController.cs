@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.Models.Entities;
 using backend.Services;
-using backend.Models.Telegram;
+using backend.Models.DTOs.Telegram;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace backend.Controllers
