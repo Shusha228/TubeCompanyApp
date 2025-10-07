@@ -7,6 +7,7 @@ namespace backend.Services
 {
     public interface ICartService
     {
+        Task<bool> ValidateUserExistsAsync(int userId);
         Task<CartItem> AddToCartAsync(int userId, string stockId, int productId, string productName, decimal quantity, bool isInMeters, decimal unitPrice, decimal finalPrice);
         Task<bool> RemoveFromCartAsync(int userId, string stockId, int productId);
         Task ClearCartAsync(int userId);
@@ -28,10 +29,30 @@ namespace backend.Services
             _logger = logger;
         }
 
+        public async Task<bool> ValidateUserExistsAsync(int userId)
+        {
+            try
+            {
+                return await _context.CustomerInfos
+                    .AnyAsync(c => c.UserId == userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error validating user existence for user {userId}");
+                throw;
+            }
+        }
+
         public async Task<CartItem> AddToCartAsync(int userId, string stockId, int productId, string productName, decimal quantity, bool isInMeters, decimal unitPrice, decimal finalPrice)
         {
             try
             {
+                // Проверка существования пользователя
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе. Пожалуйста, заполните информацию о себе перед добавлением товаров в корзину.");
+                }
+
                 var stockExists = await _context.Stocks
                     .AnyAsync(s => s.IDStock == stockId);
                 
@@ -107,6 +128,12 @@ namespace backend.Services
         {
             try
             {
+                // Проверка существования пользователя
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+                }
+
                 var cartItem = await _context.CartItems
                     .FirstOrDefaultAsync(c => c.UserId == userId && c.StockId == stockId && c.ProductId == productId);
 
@@ -132,6 +159,12 @@ namespace backend.Services
         {
             try
             {
+                // Проверка существования пользователя
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+                }
+
                 var cartItems = await _context.CartItems
                     .Where(c => c.UserId == userId)
                     .ToListAsync();
@@ -155,6 +188,12 @@ namespace backend.Services
         {
             try
             {
+                // Проверка существования пользователя
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+                }
+
                 return await _context.CartItems
                     .Where(c => c.UserId == userId)
                     .OrderByDescending(c => c.AddedAt)
@@ -171,6 +210,12 @@ namespace backend.Services
         {
             try
             {
+                // Проверка существования пользователя
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+                }
+
                 if (from < 0) throw new ArgumentException("From cannot be negative");
                 if (to <= from) throw new ArgumentException("To must be greater than from");
                 if (to - from > 100) throw new ArgumentException("Page size cannot exceed 100 items");
@@ -213,6 +258,12 @@ namespace backend.Services
         {
             try
             {
+                // Проверка существования пользователя
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+                }
+
                 var cartItem = await _context.CartItems
                     .FirstOrDefaultAsync(c => c.UserId == userId && c.StockId == stockId && c.ProductId == productId);
 
@@ -248,6 +299,12 @@ namespace backend.Services
         {
             try
             {
+                // Проверка существования пользователя
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+                }
+
                 return await _context.CartItems
                     .Where(c => c.UserId == userId)
                     .SumAsync(c => c.FinalPrice);
@@ -263,6 +320,12 @@ namespace backend.Services
         {
             try
             {
+                // Проверка существования пользователя
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+                }
+
                 return await _context.CartItems
                     .Where(c => c.UserId == userId)
                     .CountAsync();

@@ -20,28 +20,11 @@ namespace backend.Controllers
             _logger = logger;
         }
 
-        // [HttpGet("{userId}")]
-        // [SwaggerOperation(Summary = "Получить корзину пользователя")]
-        // [SwaggerResponse(200, "Корзина получена", typeof(List<CartItem>))]
-        // [SwaggerResponse(500, "Ошибка сервера")]
-        // public async Task<ActionResult<List<CartItem>>> GetCart(int userId)
-        // {
-        //     try
-        //     {
-        //         var cartItems = await _cartService.GetCartItemsAsync(userId);
-        //         return Ok(cartItems);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         _logger.LogError(ex, $"Error getting cart for user {userId}");
-        //         return StatusCode(500, "Ошибка при получении корзины");
-        //     }
-        // }
-
         [HttpGet("{userId}/paged")]
         [SwaggerOperation(Summary = "Получить корзину с пагинацией")]
         [SwaggerResponse(200, "Корзина получена", typeof(CartPaginationResponse))]
         [SwaggerResponse(400, "Неверные параметры пагинации")]
+        [SwaggerResponse(404, "Пользователь не найден")]
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult<CartPaginationResponse>> GetCartPaged(
             int userId,
@@ -52,6 +35,11 @@ namespace backend.Controllers
             {
                 var cartResponse = await _cartService.GetCartItemsPagedAsync(userId, from, to);
                 return Ok(cartResponse);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"User not found for cart operation: {userId}");
+                return NotFound(ex.Message);
             }
             catch (ArgumentException ex)
             {
@@ -69,7 +57,7 @@ namespace backend.Controllers
         [SwaggerOperation(Summary = "Добавить товар в корзину")]
         [SwaggerResponse(200, "Товар добавлен в корзину", typeof(CartItem))]
         [SwaggerResponse(400, "Неверные данные запроса")]
-        [SwaggerResponse(404, "Товар или склад не найдены")]
+        [SwaggerResponse(404, "Пользователь не найден")]
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult<CartItem>> AddToCart(
             int userId,
@@ -98,7 +86,7 @@ namespace backend.Controllers
             catch (InvalidOperationException ex)
             {
                 _logger.LogWarning(ex, $"Validation error adding to cart for user {userId}");
-                return BadRequest(ex.Message);
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -110,7 +98,7 @@ namespace backend.Controllers
         [HttpDelete("{userId}/items/{stockId}/{productId}")]
         [SwaggerOperation(Summary = "Удалить товар из корзины")]
         [SwaggerResponse(204, "Товар удален из корзины")]
-        [SwaggerResponse(404, "Товар не найден в корзине")]
+        [SwaggerResponse(404, "Пользователь или товар не найден")]
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult> RemoveFromCart(int userId, string stockId, int productId)
         {
@@ -125,6 +113,11 @@ namespace backend.Controllers
 
                 return NoContent();
             }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"User not found for cart operation: {userId}");
+                return NotFound(ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error removing from cart for user {userId}, stock {stockId}, product {productId}");
@@ -135,6 +128,7 @@ namespace backend.Controllers
         [HttpDelete("{userId}")]
         [SwaggerOperation(Summary = "Очистить корзину")]
         [SwaggerResponse(204, "Корзина очищена")]
+        [SwaggerResponse(404, "Пользователь не найден")]
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult> ClearCart(int userId)
         {
@@ -142,6 +136,11 @@ namespace backend.Controllers
             {
                 await _cartService.ClearCartAsync(userId);
                 return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"User not found for cart operation: {userId}");
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -154,7 +153,7 @@ namespace backend.Controllers
         [SwaggerOperation(Summary = "Обновить количество товара")]
         [SwaggerResponse(200, "Количество обновлено", typeof(CartItem))]
         [SwaggerResponse(400, "Неверное количество")]
-        [SwaggerResponse(404, "Товар не найден в корзине")]
+        [SwaggerResponse(404, "Пользователь или товар не найден")]
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult<CartItem>> UpdateQuantity(
             int userId,
@@ -178,6 +177,11 @@ namespace backend.Controllers
 
                 return Ok(cartItem);
             }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"User not found for cart operation: {userId}");
+                return NotFound(ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error updating quantity for user {userId}, stock {stockId}, product {productId}");
@@ -188,6 +192,7 @@ namespace backend.Controllers
         [HttpGet("{userId}/total")]
         [SwaggerOperation(Summary = "Получить сумму корзины")]
         [SwaggerResponse(200, "Сумма корзины", typeof(decimal))]
+        [SwaggerResponse(404, "Пользователь не найден")]
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult<decimal>> GetCartTotal(int userId)
         {
@@ -195,6 +200,11 @@ namespace backend.Controllers
             {
                 var total = await _cartService.GetCartTotalAsync(userId);
                 return Ok(total);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"User not found for cart operation: {userId}");
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -206,6 +216,7 @@ namespace backend.Controllers
         [HttpGet("{userId}/count")]
         [SwaggerOperation(Summary = "Получить количество товаров")]
         [SwaggerResponse(200, "Количество товаров", typeof(int))]
+        [SwaggerResponse(404, "Пользователь не найден")]
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult<int>> GetCartItemsCount(int userId)
         {
@@ -214,10 +225,33 @@ namespace backend.Controllers
                 var count = await _cartService.GetCartItemsCountAsync(userId);
                 return Ok(count);
             }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"User not found for cart operation: {userId}");
+                return NotFound(ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error getting cart items count for user {userId}");
                 return StatusCode(500, "Ошибка при получении количества товаров в корзине");
+            }
+        }
+
+        [HttpGet("{userId}/validate")]
+        [SwaggerOperation(Summary = "Проверить существование пользователя")]
+        [SwaggerResponse(200, "Пользователь существует", typeof(bool))]
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult<bool>> ValidateUser(int userId)
+        {
+            try
+            {
+                var exists = await _cartService.ValidateUserExistsAsync(userId);
+                return Ok(exists);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error validating user existence for user {userId}");
+                return StatusCode(500, "Ошибка при проверке пользователя");
             }
         }
     }
