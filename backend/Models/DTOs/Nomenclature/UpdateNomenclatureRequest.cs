@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace backend.Models.Nomenclature
+namespace backend.Models.DTOs.Nomenclature
 {
     public class UpdateNomenclatureRequest
     {

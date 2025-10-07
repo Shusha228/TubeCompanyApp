@@ -127,24 +127,6 @@ namespace backend.Services
                 existingStocks.Count, stockGuids.Count);
         }
 
-        public async Task<List<Remnant>> GetRemnantsByNomenclatureAsync(int nomenclatureId)
-        {
-            return await _context.Remnants
-                .Where(r => r.ID == nomenclatureId)
-                .Include(r => r.Stock) // Если есть навигационное свойство
-                .OrderBy(r => r.Stock.StockName)
-                .ToListAsync();
-        }
-
-        public async Task<List<Remnant>> GetRemnantsByStockAsync(string stockId)
-        {
-            return await _context.Remnants
-                .Where(r => r.IDStock == stockId)
-                .Include(r => r.Nomenclature) // Если есть навигационное свойство
-                .OrderBy(r => r.Nomenclature.Name)
-                .ToListAsync();
-        }
-
         public async Task<Remnant?> GetRemnantAsync(int nomenclatureId, string stockId)
         {
             return await _context.Remnants

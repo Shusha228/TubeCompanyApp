@@ -7,7 +7,7 @@ namespace backend.Models.Entities
         [Key]
         public int ID { get; set; }
         public string IDCat { get; set; } = string.Empty;
-        public int IDType { get; set; } // Оставляем как int
+        public int IDType { get; set; }
         public string IDTypeNew { get; set; } = string.Empty;
         public string ProductionType { get; set; } = string.Empty;
         public string IDFunctionType { get; set; } = string.Empty;
@@ -21,5 +21,8 @@ namespace backend.Models.Entities
         public decimal PipeWallThickness { get; set; }
         public string Status { get; set; } = string.Empty;
         public decimal Koef { get; set; }
+        
+        // Временное решение - не навигационное свойство
+        public List<Remnant>? Remnants { get; set; }
     }
 }

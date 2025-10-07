@@ -19,8 +19,8 @@ namespace backend.Models.Entities
         public decimal? AvgTubeLength { get; set; }
         public decimal? AvgTubeWeight { get; set; }
         
-        // Навигационные свойства
-        public Nomenclature? Nomenclature { get; set; }
-        public Stock? Stock { get; set; }
+        // Убираем навигационные свойства временно
+        // public Nomenclature? Nomenclature { get; set; }
+        // public Stock? Stock { get; set; }
     }
 }

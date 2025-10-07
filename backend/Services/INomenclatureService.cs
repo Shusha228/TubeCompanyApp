@@ -1,5 +1,6 @@
 using backend.Models.Entities;
 using backend.Data;
+using backend.Models.DTOs.Nomenclature;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services
@@ -14,10 +15,11 @@ namespace backend.Services
         Task<List<Nomenclature>> GetByTypeAsync(int typeId);
         Task<List<Nomenclature>> SearchAsync(string searchTerm);
         
-        /// <summary>
-        /// Расчет стоимости для номенклатуры
-        /// </summary>
-        Task<Models.Nomenclature.PriceCalculationResult> CalculatePriceAsync(Models.Nomenclature.PriceCalculationRequest request);
+        Task<NomenclaturePaginationResponse> GetPagedAsync(int from, int to);
+        Task<NomenclaturePaginationResponse> GetByTypePagedAsync(int typeId, int from, int to);
+        Task<NomenclaturePaginationResponse> SearchPagedAsync(string searchTerm, int from, int to);
+        
+        Task<PriceCalculationResult> CalculatePriceAsync(PriceCalculationRequest request);
     }
 
     public class NomenclatureService : INomenclatureService
@@ -35,9 +37,14 @@ namespace backend.Services
         {
             try
             {
-                return await _context.Nomenclatures
+                var nomenclatures = await _context.Nomenclatures
                     .OrderBy(n => n.ID)
                     .ToListAsync();
+
+                // Явно загружаем Remnants для каждой номенклатуры
+                await LoadRemnantsForNomenclatures(nomenclatures);
+
+                return nomenclatures;
             }
             catch (Exception ex)
             {
@@ -46,12 +53,66 @@ namespace backend.Services
             }
         }
 
+        public async Task<NomenclaturePaginationResponse> GetPagedAsync(int from, int to)
+        {
+            try
+            {
+                if (from < 0) throw new ArgumentException("From cannot be negative");
+                if (to <= from) throw new ArgumentException("To must be greater than from");
+                if (to - from > 100) throw new ArgumentException("Page size cannot exceed 100 items");
+                
+                var totalCount = await _context.Nomenclatures.CountAsync();
+
+                var items = await _context.Nomenclatures
+                    .OrderBy(n => n.ID)
+                    .Skip(from)
+                    .Take(to - from)
+                    .ToListAsync();
+
+                // Явно загружаем Remnants для полученных номенклатур
+                await LoadRemnantsForNomenclatures(items);
+
+                var pageSize = to - from;
+                var currentPage = from / pageSize;
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+                return new NomenclaturePaginationResponse
+                {
+                    Items = items,
+                    Meta = new NomenclaturePaginationMeta
+                    {
+                        TotalPages = totalPages,
+                        Page = currentPage,
+                        PageLimit = pageSize,
+                        TotalCount = totalCount
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting paged nomenclature from: {from}, to: {to}");
+                throw;
+            }
+        }
+
         public async Task<Nomenclature?> GetByIdAsync(int id)
         {
             try
             {
-                return await _context.Nomenclatures
+                var nomenclature = await _context.Nomenclatures
                     .FirstOrDefaultAsync(n => n.ID == id);
+
+                if (nomenclature != null)
+                {
+                    // Явно загружаем Remnants для этой номенклатуры
+                    var remnants = await _context.Remnants
+                        .Where(r => r.ID == id)
+                        .ToListAsync();
+                    
+                    nomenclature.Remnants = remnants;
+                }
+
+                return nomenclature;
             }
             catch (Exception ex)
             {
@@ -73,6 +134,9 @@ namespace backend.Services
                 {
                     throw new InvalidOperationException($"Nomenclature with ID {nomenclature.ID} already exists");
                 }
+
+                // Не сохраняем Remnants при создании - они должны создаваться отдельно
+                nomenclature.Remnants = null;
 
                 _context.Nomenclatures.Add(nomenclature);
                 await _context.SaveChangesAsync();
@@ -103,6 +167,7 @@ namespace backend.Services
                     return null;
                 }
                 
+                // Обновляем только основные поля
                 existing.IDCat = nomenclature.IDCat;
                 existing.IDType = nomenclature.IDType;
                 existing.IDTypeNew = nomenclature.IDTypeNew;
@@ -121,6 +186,9 @@ namespace backend.Services
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // Загружаем актуальные Remnants после обновления
+                await LoadRemnantsForNomenclatures(new List<Nomenclature> { existing });
 
                 _logger.LogInformation($"Updated nomenclature with ID: {id}");
                 return existing;
@@ -166,14 +234,65 @@ namespace backend.Services
         {
             try
             {
-                return await _context.Nomenclatures
+                var nomenclatures = await _context.Nomenclatures
                     .Where(n => n.IDType == typeId)
                     .OrderBy(n => n.ID)
                     .ToListAsync();
+
+                // Явно загружаем Remnants для найденных номенклатур
+                await LoadRemnantsForNomenclatures(nomenclatures);
+
+                return nomenclatures;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error getting nomenclature by type: {typeId}");
+                throw;
+            }
+        }
+
+        public async Task<NomenclaturePaginationResponse> GetByTypePagedAsync(int typeId, int from, int to)
+        {
+            try
+            {
+                if (from < 0) throw new ArgumentException("From cannot be negative");
+                if (to <= from) throw new ArgumentException("To must be greater than from");
+                if (to - from > 100) throw new ArgumentException("Page size cannot exceed 100 items");
+                
+                var query = _context.Nomenclatures
+                    .Where(n => n.IDType == typeId);
+
+                var totalCount = await query.CountAsync();
+
+                var items = await query
+                    .OrderBy(n => n.ID)
+                    .Skip(from)
+                    .Take(to - from)
+                    .ToListAsync();
+
+                // Явно загружаем Remnants для полученных номенклатур
+                await LoadRemnantsForNomenclatures(items);
+
+                var pageSize = to - from;
+                var currentPage = from / pageSize;
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+                return new NomenclaturePaginationResponse
+                {
+                    Items = items,
+                    Meta = new NomenclaturePaginationMeta
+                    {
+                        TotalPages = totalPages,
+                        Page = currentPage,
+                        PageLimit = pageSize,
+                        TotalCount = totalCount,
+                        TypeId = typeId
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting paged nomenclature by type: {typeId}, from: {from}, to: {to}");
                 throw;
             }
         }
@@ -188,13 +307,18 @@ namespace backend.Services
                 }
 
                 var term = searchTerm.ToLower();
-                return await _context.Nomenclatures
+                var nomenclatures = await _context.Nomenclatures
                     .Where(n => n.Name.ToLower().Contains(term) ||
                                n.Gost.ToLower().Contains(term) ||
                                n.SteelGrade.ToLower().Contains(term) ||
                                n.Manufacturer.ToLower().Contains(term))
                     .OrderBy(n => n.ID)
                     .ToListAsync();
+
+                // Явно загружаем Remnants для найденных номенклатур
+                await LoadRemnantsForNomenclatures(nomenclatures);
+
+                return nomenclatures;
             }
             catch (Exception ex)
             {
@@ -202,11 +326,96 @@ namespace backend.Services
                 throw;
             }
         }
-        
+
+        public async Task<NomenclaturePaginationResponse> SearchPagedAsync(string searchTerm, int from, int to)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    return await GetPagedAsync(from, to);
+                }
+
+                if (from < 0) throw new ArgumentException("From cannot be negative");
+                if (to <= from) throw new ArgumentException("To must be greater than from");
+                if (to - from > 100) throw new ArgumentException("Page size cannot exceed 100 items");
+
+                var term = searchTerm.ToLower();
+                var query = _context.Nomenclatures
+                    .Where(n => n.Name.ToLower().Contains(term) ||
+                               n.Gost.ToLower().Contains(term) ||
+                               n.SteelGrade.ToLower().Contains(term) ||
+                               n.Manufacturer.ToLower().Contains(term));
+
+                var totalCount = await query.CountAsync();
+
+                var items = await query
+                    .OrderBy(n => n.ID)
+                    .Skip(from)
+                    .Take(to - from)
+                    .ToListAsync();
+
+                // Явно загружаем Remnants для полученных номенклатур
+                await LoadRemnantsForNomenclatures(items);
+
+                var pageSize = to - from;
+                var currentPage = from / pageSize;
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+                return new NomenclaturePaginationResponse
+                {
+                    Items = items,
+                    Meta = new NomenclaturePaginationMeta
+                    {
+                        TotalPages = totalPages,
+                        Page = currentPage,
+                        PageLimit = pageSize,
+                        TotalCount = totalCount,
+                        SearchTerm = searchTerm
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error searching paged nomenclature with term: {searchTerm}, from: {from}, to: {to}");
+                throw;
+            }
+        }
+
         /// <summary>
-        /// Расчет стоимости для номенклатуры с учетом скидок
+        /// Вспомогательный метод для загрузки Remnants для списка номенклатур
         /// </summary>
-        public async Task<Models.Nomenclature.PriceCalculationResult> CalculatePriceAsync(Models.Nomenclature.PriceCalculationRequest request)
+        private async Task LoadRemnantsForNomenclatures(List<Nomenclature> nomenclatures)
+        {
+            if (!nomenclatures.Any()) return;
+
+            var nomenclatureIds = nomenclatures.Select(n => n.ID).ToList();
+
+            // Получаем все Remnants для этих номенклатур одним запросом
+            var allRemnants = await _context.Remnants
+                .Where(r => nomenclatureIds.Contains(r.ID))
+                .ToListAsync();
+
+            // Группируем Remnants по ID номенклатуры
+            var remnantsByNomenclatureId = allRemnants
+                .GroupBy(r => r.ID)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Назначаем Remnants каждой номенклатуре
+            foreach (var nomenclature in nomenclatures)
+            {
+                if (remnantsByNomenclatureId.TryGetValue(nomenclature.ID, out var remnants))
+                {
+                    nomenclature.Remnants = remnants;
+                }
+                else
+                {
+                    nomenclature.Remnants = new List<Remnant>();
+                }
+            }
+        }
+        
+        public async Task<PriceCalculationResult> CalculatePriceAsync(PriceCalculationRequest request)
         {
             try
             {
@@ -280,7 +489,7 @@ namespace backend.Services
                     convertedQuantity = request.Quantity / nomenclature.Koef;
                 }
 
-                var result = new Models.Nomenclature.PriceCalculationResult
+                var result = new PriceCalculationResult
                 {
                     NomenclatureId = request.NomenclatureId,
                     NomenclatureName = nomenclature.Name,
@@ -312,5 +521,21 @@ namespace backend.Services
                 throw;
             }
         }
+    }
+
+    public class NomenclaturePaginationResponse
+    {
+        public List<Nomenclature> Items { get; set; } = new List<Nomenclature>();
+        public NomenclaturePaginationMeta Meta { get; set; } = new NomenclaturePaginationMeta();
+    }
+
+    public class NomenclaturePaginationMeta
+    {
+        public int TotalPages { get; set; }
+        public int Page { get; set; }
+        public int PageLimit { get; set; }
+        public int TotalCount { get; set; }
+        public string? SearchTerm { get; set; }
+        public int? TypeId { get; set; }
     }
 }

@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.Models.Entities;
 using backend.Services;
-using backend.Models.Nomenclature;
+using backend.Models.DTOs.Nomenclature;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace backend.Controllers
 {
-    
+    /// <summary>
     /// API для управления номенклатурой трубной продукции
-    
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [SwaggerTag("Управление справочником трубной продукции - создание, чтение, обновление и удаление позиций")]
@@ -23,7 +23,10 @@ namespace backend.Controllers
             _logger = logger;
         }
 
-
+        /// <summary>
+        /// Получить весь список номенклатуры
+        /// </summary>
+        /// <returns>Список всех позиций номенклатуры</returns>
         [HttpGet]
         [SwaggerOperation(Summary = "Получить весь список номенклатуры", Description = "Возвращает полный список всех позиций трубной продукции")]
         [SwaggerResponse(200, "Успешный запрос", typeof(List<Nomenclature>))]
@@ -45,6 +48,56 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>
+        /// Получить список номенклатуры с пагинацией
+        /// </summary>
+        /// <param name="page">Номер страницы (начиная с 0)</param>
+        /// <param name="pageSize">Размер страницы (по умолчанию 20, максимум 100)</param>
+        /// <returns>Пагинированный список номенклатуры</returns>
+        [HttpGet("paged")]
+        [SwaggerOperation(Summary = "Получить список с пагинацией", Description = "Возвращает пагинированный список позиций номенклатуры")]
+        [SwaggerResponse(200, "Успешный запрос", typeof(NomenclaturePaginationResponse))]
+        public async Task<ActionResult<NomenclaturePaginationResponse>> GetPaged(
+            [SwaggerParameter("Номер страницы (начиная с 0)", Required = false)] 
+            [FromQuery] int page = 0,
+            [SwaggerParameter("Размер страницы (по умолчанию 20, максимум 100)", Required = false)] 
+            [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                if (page < 0)
+                {
+                    return BadRequest(new { error = "Page cannot be negative" });
+                }
+
+                if (pageSize <= 0 || pageSize > 100)
+                {
+                    return BadRequest(new { error = "PageSize must be between 1 and 100" });
+                }
+
+                var from = page * pageSize;
+                var to = from + pageSize;
+
+                var result = await _nomenclatureService.GetPagedAsync(from, to);
+                
+                return Ok(new { 
+                    success = true, 
+                    data = result.Items,
+                    meta = result.Meta
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting paged nomenclature, page: {page}, pageSize: {pageSize}");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Получить позицию номенклатуры по ID
+        /// </summary>
+        /// <param name="id">ID позиции номенклатуры</param>
+        /// <returns>Позиция номенклатуры</returns>
         [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Получить позицию по ID", Description = "Возвращает конкретную позицию номенклатуры по её идентификатору")]
         [SwaggerResponse(200, "Позиция найдена", typeof(Nomenclature))]
@@ -70,6 +123,11 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>
+        /// Создать новую позицию номенклатуры
+        /// </summary>
+        /// <param name="request">Данные для создания позиции</param>
+        /// <returns>Созданная позиция номенклатуры</returns>
         [HttpPost]
         [SwaggerOperation(Summary = "Создать новую позицию", Description = "Создаёт новую запись в справочнике номенклатуры")]
         [SwaggerResponse(201, "Позиция создана", typeof(Nomenclature))]
@@ -115,6 +173,12 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>
+        /// Обновить позицию номенклатуры
+        /// </summary>
+        /// <param name="id">ID позиции для обновления</param>
+        /// <param name="request">Новые данные позиции</param>
+        /// <returns>Обновленная позиция номенклатуры</returns>
         [HttpPut("{id}")]
         [SwaggerOperation(Summary = "Обновить позицию", Description = "Обновляет данные существующей позиции номенклатуры")]
         [SwaggerResponse(200, "Позиция обновлена", typeof(Nomenclature))]
@@ -165,6 +229,11 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>
+        /// Удалить позицию номенклатуры
+        /// </summary>
+        /// <param name="id">ID позиции для удаления</param>
+        /// <returns>Результат операции</returns>
         [HttpDelete("{id}")]
         [SwaggerOperation(Summary = "Удалить позицию", Description = "Удаляет позицию из справочника номенклатуры")]
         [SwaggerResponse(200, "Позиция удалена")]
@@ -193,6 +262,11 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>
+        /// Получить номенклатуру по типу продукции
+        /// </summary>
+        /// <param name="typeId">ID типа продукции</param>
+        /// <returns>Список позиций указанного типа</returns>
         [HttpGet("type/{typeId}")]
         [SwaggerOperation(Summary = "Получить по типу продукции", Description = "Возвращает список позиций номенклатуры по указанному типу продукции")]
         [SwaggerResponse(200, "Список позиций по типу", typeof(List<Nomenclature>))]
@@ -215,6 +289,58 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>
+        /// Получить номенклатуру по типу продукции с пагинацией
+        /// </summary>
+        /// <param name="typeId">ID типа продукции</param>
+        /// <param name="page">Номер страницы (начиная с 0)</param>
+        /// <param name="pageSize">Размер страницы (по умолчанию 20, максимум 100)</param>
+        /// <returns>Пагинированный список позиций указанного типа</returns>
+        [HttpGet("type/{typeId}/paged")]
+        [SwaggerOperation(Summary = "Получить по типу продукции с пагинацией", Description = "Возвращает пагинированный список позиций номенклатуры по указанному типу продукции")]
+        [SwaggerResponse(200, "Пагинированный список позиций по типу", typeof(NomenclaturePaginationResponse))]
+        public async Task<ActionResult<NomenclaturePaginationResponse>> GetByTypePaged(
+            [SwaggerParameter("ID типа продукции", Required = true)] int typeId,
+            [SwaggerParameter("Номер страницы (начиная с 0)", Required = false)] 
+            [FromQuery] int page = 0,
+            [SwaggerParameter("Размер страницы (по умолчанию 20, максимум 100)", Required = false)] 
+            [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                if (page < 0)
+                {
+                    return BadRequest(new { error = "Page cannot be negative" });
+                }
+
+                if (pageSize <= 0 || pageSize > 100)
+                {
+                    return BadRequest(new { error = "PageSize must be between 1 and 100" });
+                }
+
+                var from = page * pageSize;
+                var to = from + pageSize;
+
+                var result = await _nomenclatureService.GetByTypePagedAsync(typeId, from, to);
+                
+                return Ok(new { 
+                    success = true, 
+                    data = result.Items,
+                    meta = result.Meta
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting paged nomenclature by type: {typeId}, page: {page}, pageSize: {pageSize}");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Поиск по номенклатуре
+        /// </summary>
+        /// <param name="term">Поисковый запрос</param>
+        /// <returns>Найденные позиции</returns>
         [HttpGet("search")]
         [SwaggerOperation(Summary = "Поиск по номенклатуре", Description = "Выполняет поиск позиций по названию, ГОСТу, марке стали или производителю")]
         [SwaggerResponse(200, "Результаты поиска", typeof(List<Nomenclature>))]
@@ -239,6 +365,63 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>
+        /// Поиск по номенклатуре с пагинацией
+        /// </summary>
+        /// <param name="term">Поисковый запрос</param>
+        /// <param name="page">Номер страницы (начиная с 0)</param>
+        /// <param name="pageSize">Размер страницы (по умолчанию 20, максимум 100)</param>
+        /// <returns>Пагинированные результаты поиска</returns>
+        [HttpGet("search/paged")]
+        [SwaggerOperation(Summary = "Поиск по номенклатуре с пагинацией", Description = "Выполняет поиск позиций по названию, ГОСТу, марке стали или производителю с пагинацией")]
+        [SwaggerResponse(200, "Пагинированные результаты поиска", typeof(NomenclaturePaginationResponse))]
+        public async Task<ActionResult<NomenclaturePaginationResponse>> SearchPaged(
+            [SwaggerParameter("Поисковый запрос", Required = true)] 
+            [FromQuery] string term,
+            [SwaggerParameter("Номер страницы (начиная с 0)", Required = false)] 
+            [FromQuery] int page = 0,
+            [SwaggerParameter("Размер страницы (по умолчанию 20, максимум 100)", Required = false)] 
+            [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(term))
+                {
+                    return BadRequest(new { error = "Search term cannot be empty" });
+                }
+
+                if (page < 0)
+                {
+                    return BadRequest(new { error = "Page cannot be negative" });
+                }
+
+                if (pageSize <= 0 || pageSize > 100)
+                {
+                    return BadRequest(new { error = "PageSize must be between 1 and 100" });
+                }
+
+                var from = page * pageSize;
+                var to = from + pageSize;
+
+                var result = await _nomenclatureService.SearchPagedAsync(term, from, to);
+                
+                return Ok(new { 
+                    success = true, 
+                    data = result.Items,
+                    meta = result.Meta
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error searching paged nomenclature with term: {term}, page: {page}, pageSize: {pageSize}");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Тестовый endpoint
+        /// </summary>
+        /// <returns>Статус работы API</returns>
         [HttpGet("test")]
         [SwaggerOperation(Summary = "Тест API", Description = "Проверка работоспособности контроллера номенклатуры")]
         [SwaggerResponse(200, "API работает корректно")]
@@ -249,5 +432,57 @@ namespace backend.Controllers
                 timestamp = DateTime.UtcNow
             });
         }
+    }
+
+    /// <summary>
+    /// Ответ пагинации для номенклатуры
+    /// </summary>
+    public class NomenclaturePaginationResponse
+    {
+        /// <summary>
+        /// Список позиций номенклатуры
+        /// </summary>
+        public List<Nomenclature> Items { get; set; } = new List<Nomenclature>();
+        
+        /// <summary>
+        /// Метаданные пагинации
+        /// </summary>
+        public NomenclaturePaginationMeta Meta { get; set; } = new NomenclaturePaginationMeta();
+    }
+
+    /// <summary>
+    /// Метаданные пагинации для номенклатуры
+    /// </summary>
+    public class NomenclaturePaginationMeta
+    {
+        /// <summary>
+        /// Общее количество страниц
+        /// </summary>
+        public int TotalPages { get; set; }
+        
+        /// <summary>
+        /// Текущая страница
+        /// </summary>
+        public int Page { get; set; }
+        
+        /// <summary>
+        /// Размер страницы
+        /// </summary>
+        public int PageLimit { get; set; }
+        
+        /// <summary>
+        /// Общее количество элементов
+        /// </summary>
+        public int TotalCount { get; set; }
+        
+        /// <summary>
+        /// Поисковый запрос (если применимо)
+        /// </summary>
+        public string? SearchTerm { get; set; }
+        
+        /// <summary>
+        /// ID типа продукции (если применимо)
+        /// </summary>
+        public int? TypeId { get; set; }
     }
 }

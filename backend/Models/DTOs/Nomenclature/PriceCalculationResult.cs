@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 
-namespace backend.Models.Nomenclature
+namespace backend.Models.DTOs.Nomenclature
 {
     
     /// Результат расчета стоимости
