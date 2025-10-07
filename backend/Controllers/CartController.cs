@@ -71,13 +71,13 @@ namespace backend.Controllers
                 }
 
                 var cartItem = await _cartService.AddToCartAsync(
-                    userId, 
+                    userId,
                     request.StockId,
                     request.ProductId,
-                    request.ProductName, 
-                    request.Quantity, 
-                    request.IsInMeters, 
-                    request.UnitPrice, 
+                    request.ProductName,
+                    request.Quantity,
+                    request.IsInMeters,
+                    request.UnitPrice,
                     request.FinalPrice
                 );
 
@@ -105,7 +105,7 @@ namespace backend.Controllers
             try
             {
                 var result = await _cartService.RemoveFromCartAsync(userId, stockId, productId);
-                
+
                 if (!result)
                 {
                     return NotFound("Товар не найден в корзине");
@@ -120,7 +120,8 @@ namespace backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error removing from cart for user {userId}, stock {stockId}, product {productId}");
+                _logger.LogError(ex,
+                    $"Error removing from cart for user {userId}, stock {stockId}, product {productId}");
                 return StatusCode(500, "Ошибка при удалении товара из корзины");
             }
         }
@@ -168,8 +169,9 @@ namespace backend.Controllers
                     return BadRequest("Количество должно быть больше 0");
                 }
 
-                var cartItem = await _cartService.UpdateCartItemQuantityAsync(userId, stockId, productId, request.NewQuantity);
-                
+                var cartItem =
+                    await _cartService.UpdateCartItemQuantityAsync(userId, stockId, productId, request.NewQuantity);
+
                 if (cartItem == null)
                 {
                     return NotFound("Товар не найден в корзине");
@@ -184,7 +186,8 @@ namespace backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error updating quantity for user {userId}, stock {stockId}, product {productId}");
+                _logger.LogError(ex,
+                    $"Error updating quantity for user {userId}, stock {stockId}, product {productId}");
                 return StatusCode(500, "Ошибка при обновлении количества товара");
             }
         }
@@ -254,6 +257,87 @@ namespace backend.Controllers
                 return StatusCode(500, "Ошибка при проверке пользователя");
             }
         }
+
+        [HttpGet("{userId}/search")]
+        [SwaggerOperation(Summary = "Поиск товаров в корзине")]
+        [SwaggerResponse(200, "Результаты поиска", typeof(List<CartItem>))]
+        [SwaggerResponse(400, "Неверный поисковый запрос")]
+        [SwaggerResponse(404, "Пользователь не найден")]
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult<List<CartItem>>> SearchInCart(
+            int userId,
+            [FromQuery] string term)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(term))
+                {
+                    return BadRequest("Поисковый запрос не может быть пустым");
+                }
+
+                var searchResults = await _cartService.SearchInCartAsync(userId, term);
+                return Ok(new
+                {
+                    success = true,
+                    data = searchResults,
+                    count = searchResults.Count,
+                    searchTerm = term
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"User not found for cart search: {userId}");
+                return NotFound(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error searching in cart for user {userId} with term: {term}");
+                return StatusCode(500, new { error = "Ошибка при поиске в корзине" });
+            }
+        }
+
+        [HttpGet("{userId}/search/paged")]
+        [SwaggerOperation(Summary = "Поиск товаров в корзине с пагинацией")]
+        [SwaggerResponse(200, "Результаты поиска", typeof(CartPaginationResponse))]
+        [SwaggerResponse(400, "Неверные параметры")]
+        [SwaggerResponse(404, "Пользователь не найден")]
+        [SwaggerResponse(500, "Ошибка сервера")]
+        public async Task<ActionResult<CartPaginationResponse>> SearchInCartPaged(
+            int userId,
+            [FromQuery] string term,
+            [FromQuery] int from = 0,
+            [FromQuery] int to = 20)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(term))
+                {
+                    return BadRequest(new { error = "Поисковый запрос не может быть пустым" });
+                }
+
+                var searchResults = await _cartService.SearchInCartPagedAsync(userId, term, from, to);
+                return Ok(new
+                {
+                    success = true,
+                    data = searchResults
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, $"Invalid pagination parameters for user {userId}");
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"User not found for cart search: {userId}");
+                return NotFound(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error searching in cart paged for user {userId} with term: {term}");
+                return StatusCode(500, new { error = "Ошибка при поиске в корзине" });
+            }
+        }
     }
 
     public class AddToCartRequest
@@ -284,5 +368,6 @@ namespace backend.Controllers
         public int Page { get; set; }
         public int PageLimit { get; set; }
         public int TotalCount { get; set; }
+        public string? SearchTerm { get; set; }
     }
 }
