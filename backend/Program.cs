@@ -229,163 +229,163 @@ app.MapGet("/webhook-info", async (IConfiguration configuration) =>
 });
 
 
-// if (app.Environment.IsDevelopment())
-// {
-//     Console.WriteLine("=== Starting data import process ===");
-//     Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
+if (app.Environment.IsDevelopment())
+{
+    Console.WriteLine("=== Starting data import process ===");
+    Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
     
-//     using var scope = app.Services.CreateScope();
-//     Console.WriteLine("Service scope created");
+    using var scope = app.Services.CreateScope();
+    Console.WriteLine("Service scope created");
     
-//     try
-//     {
-//         // 1. Импорт типов продуктов
-//         var productTypeImporter = scope.ServiceProvider.GetRequiredService<ProductTypeImporter>();
-//         Console.WriteLine("ProductTypeImporter resolved successfully");
+    try
+    {
+        // 1. Импорт типов продуктов
+        var productTypeImporter = scope.ServiceProvider.GetRequiredService<ProductTypeImporter>();
+        Console.WriteLine("ProductTypeImporter resolved successfully");
         
-//         var productTypeJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "types.json");
-//         Console.WriteLine($"Looking for product types JSON file at: {productTypeJsonPath}");
+        var productTypeJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "types.json");
+        Console.WriteLine($"Looking for product types JSON file at: {productTypeJsonPath}");
         
-//         if (File.Exists(productTypeJsonPath))
-//         {
-//             Console.WriteLine("Product types JSON file found, starting import...");
-//             try
-//             {
-//                 await productTypeImporter.ImportProductTypesFromJsonAsync(productTypeJsonPath);
-//                 Console.WriteLine("✅ Product types data imported successfully");
-//             }
-//             catch (Exception ex)
-//             {
-//                 Console.WriteLine($"❌ Product types data import failed: {ex.Message}");
-//                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
-//             }
-//         }
-//         else
-//         {
-//             Console.WriteLine($"❌ Product types JSON file not found at: {productTypeJsonPath}");
-//         }
+        if (File.Exists(productTypeJsonPath))
+        {
+            Console.WriteLine("Product types JSON file found, starting import...");
+            try
+            {
+                await productTypeImporter.ImportProductTypesFromJsonAsync(productTypeJsonPath);
+                Console.WriteLine("✅ Product types data imported successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Product types data import failed: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"❌ Product types JSON file not found at: {productTypeJsonPath}");
+        }
 
-//         // 2. Импорт складов
-//         var stockImporter = scope.ServiceProvider.GetRequiredService<StockImporter>();
-//         Console.WriteLine("StockImporter resolved successfully");
+        // 2. Импорт складов
+        var stockImporter = scope.ServiceProvider.GetRequiredService<StockImporter>();
+        Console.WriteLine("StockImporter resolved successfully");
         
-//         var stockJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "stocks.json");
-//         Console.WriteLine($"Looking for stocks JSON file at: {stockJsonPath}");
+        var stockJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "stocks.json");
+        Console.WriteLine($"Looking for stocks JSON file at: {stockJsonPath}");
         
-//         if (File.Exists(stockJsonPath))
-//         {
-//             Console.WriteLine("Stocks JSON file found, starting import...");
-//             try
-//             {
-//                 await stockImporter.ImportStocksFromJsonAsync(stockJsonPath);
-//                 Console.WriteLine("✅ Stocks data imported successfully");
-//             }
-//             catch (Exception ex)
-//             {
-//                 Console.WriteLine($"❌ Stocks data import failed: {ex.Message}");
-//                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
-//             }
-//         }
-//         else
-//         {
-//             Console.WriteLine($"❌ Stocks JSON file not found at: {stockJsonPath}");
-//         }
+        if (File.Exists(stockJsonPath))
+        {
+            Console.WriteLine("Stocks JSON file found, starting import...");
+            try
+            {
+                await stockImporter.ImportStocksFromJsonAsync(stockJsonPath);
+                Console.WriteLine("✅ Stocks data imported successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Stocks data import failed: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"❌ Stocks JSON file not found at: {stockJsonPath}");
+        }
 
-//         // 3. Импорт номенклатуры
-//         var nomenclatureImporter = scope.ServiceProvider.GetRequiredService<NomenclatureImporter>();
-//         Console.WriteLine("NomenclatureImporter resolved successfully");
+        // 3. Импорт номенклатуры
+        var nomenclatureImporter = scope.ServiceProvider.GetRequiredService<NomenclatureImporter>();
+        Console.WriteLine("NomenclatureImporter resolved successfully");
         
-//         var nomenclatureJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "nomenclature.json");
-//         Console.WriteLine($"Looking for nomenclature JSON file at: {nomenclatureJsonPath}");
+        var nomenclatureJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "nomenclature.json");
+        Console.WriteLine($"Looking for nomenclature JSON file at: {nomenclatureJsonPath}");
         
-//         if (File.Exists(nomenclatureJsonPath))
-//         {
-//             Console.WriteLine("Nomenclature JSON file found, starting import...");
-//             try
-//             {
-//                 await nomenclatureImporter.ImportNomenclatureFromJsonAsync(nomenclatureJsonPath);
-//                 Console.WriteLine("✅ Nomenclature data imported successfully");
-//             }
-//             catch (Exception ex)
-//             {
-//                 Console.WriteLine($"❌ Nomenclature data import failed: {ex.Message}");
-//                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
-//             }
-//         }
-//         else
-//         {
-//             Console.WriteLine($"❌ Nomenclature JSON file not found at: {nomenclatureJsonPath}");
-//         }
+        if (File.Exists(nomenclatureJsonPath))
+        {
+            Console.WriteLine("Nomenclature JSON file found, starting import...");
+            try
+            {
+                await nomenclatureImporter.ImportNomenclatureFromJsonAsync(nomenclatureJsonPath);
+                Console.WriteLine("✅ Nomenclature data imported successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Nomenclature data import failed: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"❌ Nomenclature JSON file not found at: {nomenclatureJsonPath}");
+        }
 
-//         // 4. Импорт остатков (должен быть после номенклатуры и складов)
-//         var remnantImporter = scope.ServiceProvider.GetRequiredService<RemnantImporter>();
-//         Console.WriteLine("RemnantImporter resolved successfully");
+        // 4. Импорт остатков (должен быть после номенклатуры и складов)
+        var remnantImporter = scope.ServiceProvider.GetRequiredService<RemnantImporter>();
+        Console.WriteLine("RemnantImporter resolved successfully");
         
-//         var remnantJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "remnants.json");
-//         Console.WriteLine($"Looking for remnants JSON file at: {remnantJsonPath}");
+        var remnantJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "remnants.json");
+        Console.WriteLine($"Looking for remnants JSON file at: {remnantJsonPath}");
         
-//         if (File.Exists(remnantJsonPath))
-//         {
-//             Console.WriteLine("Remnants JSON file found, starting import...");
-//             try
-//             {
-//                 await remnantImporter.ImportRemnantsFromJsonAsync(remnantJsonPath);
-//                 Console.WriteLine("✅ Remnants data imported successfully");
-//             }
-//             catch (Exception ex)
-//             {
-//                 Console.WriteLine($"❌ Remnants data import failed: {ex.Message}");
-//                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
-//             }
-//         }
-//         else
-//         {
-//             Console.WriteLine($"❌ Remnants JSON file not found at: {remnantJsonPath}");
-//         }
+        if (File.Exists(remnantJsonPath))
+        {
+            Console.WriteLine("Remnants JSON file found, starting import...");
+            try
+            {
+                await remnantImporter.ImportRemnantsFromJsonAsync(remnantJsonPath);
+                Console.WriteLine("✅ Remnants data imported successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Remnants data import failed: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"❌ Remnants JSON file not found at: {remnantJsonPath}");
+        }
 
-//         // 5. Импорт цен (должен быть последним)
-//         var priceImporter = scope.ServiceProvider.GetRequiredService<PriceImporter>();
-//         Console.WriteLine("PriceImporter resolved successfully");
+        // 5. Импорт цен (должен быть последним)
+        var priceImporter = scope.ServiceProvider.GetRequiredService<PriceImporter>();
+        Console.WriteLine("PriceImporter resolved successfully");
         
-//         var priceJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "prices.json");
-//         Console.WriteLine($"Looking for prices JSON file at: {priceJsonPath}");
+        var priceJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json", "prices.json");
+        Console.WriteLine($"Looking for prices JSON file at: {priceJsonPath}");
         
-//         if (File.Exists(priceJsonPath))
-//         {
-//             Console.WriteLine("Prices JSON file found, starting import...");
-//             try
-//             {
-//                 await priceImporter.ImportPricesFromJsonAsync(priceJsonPath);
-//                 Console.WriteLine("✅ Prices data imported successfully");
-//             }
-//             catch (Exception ex)
-//             {
-//                 Console.WriteLine($"❌ Prices data import failed: {ex.Message}");
-//                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
-//             }
-//         }
-//         else
-//         {
-//             Console.WriteLine($"❌ Prices JSON file not found at: {priceJsonPath}");
-//         }
+        if (File.Exists(priceJsonPath))
+        {
+            Console.WriteLine("Prices JSON file found, starting import...");
+            try
+            {
+                await priceImporter.ImportPricesFromJsonAsync(priceJsonPath);
+                Console.WriteLine("✅ Prices data imported successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Prices data import failed: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"❌ Prices JSON file not found at: {priceJsonPath}");
+        }
 
-//         // Покажем какие файлы есть в папке Data_Json
-//         var dataJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json");
-//         if (Directory.Exists(dataJsonPath))
-//         {
-//             var files = Directory.GetFiles(dataJsonPath);
-//             Console.WriteLine($"Files in Data_Json directory: {string.Join(", ", files)}");
-//         }
-//         else
-//         {
-//             Console.WriteLine("Data_Json directory does not exist");
-//         }
-//     }
-//     catch (Exception ex)
-//     {
-//         Console.WriteLine($"❌ Failed to resolve services: {ex.Message}");
-//     }
+        // Покажем какие файлы есть в папке Data_Json
+        var dataJsonPath = Path.Combine(app.Environment.ContentRootPath, "Data_Json");
+        if (Directory.Exists(dataJsonPath))
+        {
+            var files = Directory.GetFiles(dataJsonPath);
+            Console.WriteLine($"Files in Data_Json directory: {string.Join(", ", files)}");
+        }
+        else
+        {
+            Console.WriteLine("Data_Json directory does not exist");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Failed to resolve services: {ex.Message}");
+    }
     
-//     Console.WriteLine("=== Data import process completed ===");
-// }
+    Console.WriteLine("=== Data import process completed ===");
+}
 app.Run();
