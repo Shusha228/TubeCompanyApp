@@ -4,11 +4,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useActiveModal } from "@/providers/active-modal";
+import { useCreateOrder } from "@/providers/create-order";
 import { useUser } from "@/providers/user";
 import { useMemo, useState } from "react";
 
 export const CreateOrderModal = () => {
   const user = useUser();
+  const { item } = useCreateOrder();
   const { closeModal } = useActiveModal();
 
   const initialNameParts = useMemo(() => {
@@ -33,10 +35,11 @@ export const CreateOrderModal = () => {
   const [consent, setConsent] = useState<boolean>(false);
 
   const onSubmit = () => {
+    if (!consent) return;
     const nowIso = new Date().toISOString();
     const body = {
       telegramUserId: user?.telegramId ?? 0,
-      items: [],
+      items: [item],
       customerInfo: {
         id: 0,
         userId: user?.telegramId ?? 0,
@@ -74,36 +77,48 @@ export const CreateOrderModal = () => {
           <div className="grid grid-cols-1 gap-2 px-2 md:px-4">
             <Label className="font-bold text-md">Контактные данные</Label>
             <Input
+              required
               placeholder="Фамилия*"
               value={lastName}
               onChange={(e) => setLastName(e.currentTarget.value)}
             />
             <Input
+              required
               placeholder="Имя*"
               value={firstName}
               onChange={(e) => setFirstName(e.currentTarget.value)}
             />
             <Input
+              required
               placeholder="Отчество*"
               value={middleName}
               onChange={(e) => setMiddleName(e.currentTarget.value)}
             />
             <Input
+              required
               placeholder="ИНН*"
+              defaultValue={user.inn}
               value={inn}
               onChange={(e) => setInn(e.currentTarget.value)}
             />
             <Input
+              required
               placeholder="Номер телефона*"
+              defaultValue={user.phone}
               value={phone}
               onChange={(e) => setPhone(e.currentTarget.value)}
             />
             <Input
+              required
               placeholder="Электронная почта*"
               value={email}
+              defaultValue={user.email}
               onChange={(e) => setEmail(e.currentTarget.value)}
             />
-            <div className="flex items-start gap-2 pt-2">
+            <div
+              className="flex items-start gap-2 pt-4"
+              onClick={() => setConsent((el) => !el)}
+            >
               <Checkbox
                 checked={consent}
                 onCheckedChange={(v) => setConsent(Boolean(v))}

@@ -37,7 +37,12 @@ export const FetchShoppingCartProvider = ({
   const [filters, setFilters] = useState<FilterSearch>({});
 
   const deleteItem = (item: ShoppingCartItem) => {
-    setData((data) => data.filter((el) => el.productId != item.productId));
+    setData((data) =>
+      data.filter(
+        (el) =>
+          !(el.productId === item.productId && el.stockId === item.stockId)
+      )
+    );
     fetch(
       getURL(`Cart/${telegramId}/items/${item.stockId}/${item.productId}`),
       {
@@ -47,15 +52,20 @@ export const FetchShoppingCartProvider = ({
   };
 
   const next = () => {
-    setCurrentFrom((el) => (el += 20));
-    setCurrentTo((el) => {
-      if (count <= (el += 20)) {
-        return count;
-      } else {
-        return (el += 20);
-      }
+    setCurrentFrom((prev) => prev + 20);
+    setCurrentTo((prev) => {
+      const proposed = prev + 20;
+      return proposed > count ? count : proposed;
     });
   };
+
+  // Reset pagination and data when search term or user changes
+  useEffect(() => {
+    setData([]);
+    setCount(0);
+    setCurrentFrom(0);
+    setCurrentTo(20);
+  }, [filters.search, telegramId]);
 
   useEffect(() => {
     setLoading(true);
@@ -63,12 +73,21 @@ export const FetchShoppingCartProvider = ({
       .then((response) => response.json())
       .then((data: ShoppingCartPaginatedResponse) => {
         if (data.items !== undefined) {
-          setData((el) => {
-            if (data !== undefined) return [...el, ...data.items];
-            return el;
+          // Merge uniquely by composite key stockId+productId
+          setData((prev) => {
+            const seen = new Set<string>();
+            const merge = [...prev, ...data.items];
+            const unique = merge.filter((it) => {
+              const key = `${it.stockId}-${it.productId}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+            return unique;
           });
 
-          setCount((el) => (el += data.items.length));
+          // Use server-reported total count for pagination
+          setCount(data.meta?.totalCount ?? data.items.length);
           setLoading(false);
         }
       });
@@ -81,7 +100,7 @@ export const FetchShoppingCartProvider = ({
         deleteItem,
         isLoading,
         setFilters,
-        hasNext: count !== currentTo,
+        hasNext: data.length < count,
         next,
       }}
     >

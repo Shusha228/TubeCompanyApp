@@ -512,12 +512,14 @@ export const MainPanel = () => {
                     </div>
                     <DrawerTitle className="pt-2">Вид продукции</DrawerTitle>
                     <ProductTypeList />
-                    <Button
-                      className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
-                      onClick={saveChangesInModal}
-                    >
-                      Сохранить
-                    </Button>
+                    <DrawerClose asChild={true}>
+                      <Button
+                        className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
+                        onClick={saveChangesInModal}
+                      >
+                        Сохранить
+                      </Button>
+                    </DrawerClose>
                     <DrawerClose>
                       <Button
                         asChild={true}

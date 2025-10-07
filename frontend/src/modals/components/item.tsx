@@ -1,8 +1,14 @@
 import { getURL } from "@/api";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import type { Item } from "@/models/item";
 import { Panel } from "@/panels";
 import { useActiveModal } from "@/providers/active-modal";
@@ -10,18 +16,25 @@ import { useActivePanel } from "@/providers/active-panel";
 import { useFetchFavorites } from "@/providers/favorites";
 import { useModalItem } from "@/providers/modal-item";
 import { useUser } from "@/providers/user";
+import { useState } from "react";
 
-const _addItemInCart = (userId: number, item: Item) => {
-  fetch(getURL(`/Cart/${userId}/items`), {
+const _addItemInCart = (
+  userId: number,
+  item: Item,
+  quantity: number,
+  isInMeters: boolean
+) => {
+  fetch(getURL(`Cart/${userId}/items`), {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json;",
+    },
     body: JSON.stringify({
-      stockId: "",
+      stockId: item.remnants[0].idStock,
       productId: item.id,
       productName: item.name,
-      quantity: 20,
-      isInMeters: true,
-      unitPrice: 200,
-      finalPrice: 2000,
+      quantity: quantity,
+      isInMeters: isInMeters,
     }),
   });
 };
@@ -32,10 +45,20 @@ export const ItemModal = () => {
   const { hasInFavorite, toggleFavorite } = useFetchFavorites();
   const { data, isLoading } = useModalItem();
   const { telegramId } = useUser();
+  const [quantity, _setQuantity] = useState(0);
+  const [isInMeter, setInMeter] = useState<boolean>(false);
+
+  const setQuantity = (value: number, inMeter: boolean) => {
+    _setQuantity(value);
+    setInMeter(inMeter);
+  };
 
   const addInCart = () => {
+    if (quantity == 0) return;
+    if (Number.isNaN(quantity)) return;
+
     if (data !== undefined) {
-      _addItemInCart(telegramId, data);
+      _addItemInCart(telegramId, data, quantity, isInMeter);
       closeModal();
       setActivePanel(Panel.Cart);
     }
@@ -95,7 +118,10 @@ export const ItemModal = () => {
           </div>
           <div className="w-full px-2">
             <div className="bg-[#ffebeb] font-medium rounded-2xl p-3 my-3 text-md text-[#ff1e1e] uppercase">
-              Остаток на складе: <b>1200 М / 63,6 т</b>
+              Остаток на складе:{" "}
+              <b>
+                {data.remnants[0].inStockM} М / {data.remnants[0].inStockT} т
+              </b>
             </div>
           </div>
           <p className="m-2 my-3">
@@ -113,7 +139,7 @@ export const ItemModal = () => {
           </p>
           <div className="w-full flex flex-col gap-2 px-2">
             <Drawer>
-              <DrawerTrigger>
+              <DrawerTrigger asChild={true}>
                 <Button
                   size="lg"
                   className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98 w-full"
@@ -121,10 +147,34 @@ export const ItemModal = () => {
                   Заказать
                 </Button>
               </DrawerTrigger>
+
               <DrawerContent>
+                <DrawerTitle className="text-[14px] fond-medium opacity-50 pl-4 pt-2">
+                  Впишите количество в одно из полей
+                </DrawerTitle>
                 <div className="flex gap-2 flex-col px-4 pt-4 pb-8">
-                  <Input placeholder="Введите длину, м" />
-                  <Input placeholder="Введите длину, м" />
+                  <Input
+                    placeholder="Введите длину, м"
+                    type="number"
+                    className={cn(
+                      quantity == 0 ? "border-destructive" : "border-input"
+                    )}
+                    value={isInMeter ? quantity : 0}
+                    onChange={(e) =>
+                      setQuantity(Number(e.currentTarget.value), true)
+                    }
+                  />
+                  <Input
+                    className={cn(
+                      quantity == 0 ? "border-destructive" : "border-input"
+                    )}
+                    placeholder="Введите длину, м"
+                    value={!isInMeter ? quantity : 0}
+                    type="number"
+                    onChange={(e) =>
+                      setQuantity(Number(e.currentTarget.value), false)
+                    }
+                  />
                   <Button
                     size="lg"
                     className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"

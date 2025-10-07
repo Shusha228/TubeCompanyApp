@@ -6,14 +6,14 @@ export interface ShoppingCartItem {
   productId: number;
   productName: string;
   quantity: number;
-  isInMeters: true;
+  isInMeters: boolean;
   finalPrice: number;
   unitPrice: number;
-  addedAt: Date;
-  updatedAt: Date;
+  addedAt: string; // ISO string from API
+  updatedAt: string; // ISO string from API
   stockId: string;
   warehouse: string;
-  product: Item;
+  product: Item | null;
 }
 
 export type ShoppingCartPaginatedResponse = PaginatedResult<ShoppingCartItem>;
