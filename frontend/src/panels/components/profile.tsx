@@ -23,7 +23,7 @@ export const ProfilePanel = () => {
         <div className="flex w-full gap-4 items-center px-4">
           <Avatar className="w-24 h-24">
             <AvatarImage
-              className="rounded-full"
+              className="rounded-full overflow-hidden"
               src={user.photo}
             ></AvatarImage>
             <AvatarFallback className="text-lg">{fallback}</AvatarFallback>
