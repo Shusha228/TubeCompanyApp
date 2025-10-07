@@ -28,7 +28,6 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { City } from "@/models/city";
 import { FetchAllItemsProvider, useFetchAllItems } from "@/providers/all-items";
-import { FetchItemProvider } from "@/providers/item";
 import { FilterIcon, SearchIcon, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
@@ -198,6 +197,9 @@ const checkBoxes = [
   },
 ];
 
+const ifNullStringReturnUndefined = (value: string) =>
+  value == "__null__" ? undefined : value;
+
 export const MainPanel = () => {
   const [category, setCategory] = useState<string>();
   const [activeCheckboxes, setActiveCheckBoxes] = useState<string[]>([]);
@@ -205,6 +207,23 @@ export const MainPanel = () => {
   const [, setActiveCity] = useState<City>();
   const citySearchInput = useRef<HTMLInputElement>(null);
   const [allowDeleteCity, setAllowDeleteCity] = useState<boolean>(false);
+  const [gost, _setGost] = useState<string>();
+  const [diameter, _setDiameter] = useState<string>();
+  const [pipeWallThickness, _setPipeWallThicknesses] = useState<string>();
+  const [steelGrade, _setSteelGrades] = useState<string>();
+
+  const setGost = (value: string) =>
+    _setGost(ifNullStringReturnUndefined(value));
+
+  const setDiameter = (value: string) =>
+    _setDiameter(ifNullStringReturnUndefined(value));
+
+  const setPipeWallThicknesses = (value: string) =>
+    _setPipeWallThicknesses(ifNullStringReturnUndefined(value));
+
+  const setSteelGrades = (value: string) =>
+    _setSteelGrades(ifNullStringReturnUndefined(value));
+
   const findedCities = useMemo(
     () =>
       citySearch.length > 2 && !allowDeleteCity
@@ -286,65 +305,131 @@ export const MainPanel = () => {
     </ScrollArea>
   );
 
-  const AttributeSelects = () => (
-    <ScrollArea className="w-full">
-      <div className="flex w-full gap-2 px-2 md:pl-4 overflow-auto">
-        <Select>
-          <SelectTrigger className="w-[100px]">
-            <SelectValue placeholder="ГОСТ" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="gost-20295">ГОСТ 20295-85</SelectItem>
-            <SelectItem value="gost-10704">
-              ГОСТ 10704-91 / ГОСТ 10706-76
-            </SelectItem>
-            <SelectItem value="iso-3183">ГОСТ ISO 3183-2015</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Диаметр" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="d-light">Light</SelectItem>
-            <SelectItem value="d-dark">Dark</SelectItem>
-            <SelectItem value="d-system">System</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select>
-          <SelectTrigger className="w-[100px]">
-            <SelectValue placeholder="Стенка" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="w-light">Light</SelectItem>
-            <SelectItem value="w-dark">Dark</SelectItem>
-            <SelectItem value="w-system">System</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Марка стали" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="steel-light">Light</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <ScrollBar className="hidden" orientation="horizontal" />
-    </ScrollArea>
-  );
+  const AttributeSelects = () => {
+    const { data, isLoading } = useFetchAllItems();
+    const visibleData = useMemo(
+      () =>
+        category !== undefined
+          ? data.filter(
+              (el) => category === undefined || el.productionType == category
+            )
+          : [],
+      [data]
+    );
+
+    if (isLoading || visibleData.length == 0) {
+      return <></>;
+    }
+
+    const gosts = [...new Set(visibleData.map((el) => el.gost))];
+    const diameters = [
+      ...new Set(visibleData.map((el) => el.diameter.toString())),
+    ];
+    const pipeWallThicknesses = [
+      ...new Set(visibleData.map((el) => el.pipeWallThickness.toString())),
+    ];
+    const steelGrades = [
+      ...new Set(visibleData.map((el) => el.steelGrade.toString())),
+    ];
+
+    return (
+      <ScrollArea className="w-full">
+        <div className="flex w-full gap-2 px-2 md:pl-4 overflow-auto">
+          <Select onValueChange={setGost} value={gost}>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder="ГОСТ" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={"__null__"}>Отменить выбор</SelectItem>
+              {gosts.map((el, i) => (
+                <SelectItem key={i} value={el}>
+                  {el}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select onValueChange={setDiameter} value={diameter}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Диаметр" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={"__null__"}>Отменить выбор</SelectItem>
+              {diameters.map((el, i) => (
+                <SelectItem key={i} value={el}>
+                  {el}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            onValueChange={setPipeWallThicknesses}
+            value={pipeWallThickness}
+          >
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder="Стенка" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={"__null__"}>Отменить выбор</SelectItem>
+              {pipeWallThicknesses.map((el, i) => (
+                <SelectItem
+                  key={i}
+                  value={el}
+                  onClick={() => setPipeWallThicknesses(el)}
+                >
+                  {el}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select onValueChange={setSteelGrades} value={steelGrade}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Марка стали" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={"__null__"}>Отменить выбор</SelectItem>
+              {steelGrades.map((el, i) => (
+                <SelectItem
+                  key={i}
+                  value={el}
+                  onClick={() => setSteelGrades(el)}
+                >
+                  {el}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <ScrollBar className="hidden" orientation="horizontal" />
+      </ScrollArea>
+    );
+  };
 
   const ItemsGrid = () => {
     const { data, isLoading } = useFetchAllItems();
+    const filteredData = useMemo(
+      () =>
+        data.filter(
+          (el) =>
+            (category === undefined || el.productionType == category) &&
+            (gost === undefined || el.gost === gost) &&
+            (pipeWallThickness === undefined ||
+              el.pipeWallThickness.toString() === pipeWallThickness) &&
+            (diameter === undefined || el.diameter.toString() === diameter) &&
+            (steelGrade === undefined || el.steelGrade === steelGrade)
+        ),
+      [data]
+    );
     return (
-      <div className="grid lg:grid-cols-6 md:grid-cols-4 grid-cols-2 gap-2 px-2 md:px-4 w-full">
-        <FetchItemProvider>
-          <>
-            {isLoading && <Spinner />}{" "}
-            {!isLoading &&
-              data.map((item) => <ItemCard key={item.id} item={item} />)}
-          </>
-        </FetchItemProvider>
+      <div className="relative grid lg:grid-cols-6 md:grid-cols-4 grid-cols-2 gap-2 px-2 md:px-4 w-full">
+        {isLoading && <Spinner />}{" "}
+        {filteredData.length > 0 &&
+          !isLoading &&
+          filteredData.map((item) => <ItemCard key={item.id} item={item} />)}
+        {filteredData.length == 0 && (
+          <div className="absolute w-dvw top-2 text-center">
+            Упс! Ничего не нашлось
+          </div>
+        )}
       </div>
     );
   };
@@ -435,10 +520,14 @@ export const MainPanel = () => {
               <div className="flex gap-2 px-2 md:pl-4 w-max">
                 {categories.map((el) => (
                   <Badge
-                    onClick={() => setCategory(el.IDType)}
+                    onClick={
+                      category == el.Type
+                        ? () => setCategory(undefined)
+                        : () => setCategory(el.Type)
+                    }
                     key={el.IDType}
                     className="cursor-pointer"
-                    variant={category == el.IDType ? "default" : "outline"}
+                    variant={category == el.Type ? "default" : "outline"}
                   >
                     {el.Type}
                   </Badge>

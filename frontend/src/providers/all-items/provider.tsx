@@ -1,13 +1,6 @@
 import { getURL } from "@/api";
 import type { Item } from "@/models/item";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type JSX,
-} from "react";
+import { useCallback, useEffect, useRef, useState, type JSX } from "react";
 import type { FilterSearch } from "../shared/filter-search";
 import { FetchAllItemsContext } from "./context";
 
@@ -21,15 +14,6 @@ export const FetchAllItemsProvider = ({
   const [filters, _setFilters] = useState<FilterSearch>({});
   const abortRef = useRef<AbortController | null>(null);
 
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams();
-    if (filters.search && filters.search.trim().length > 0) {
-      params.set("search", filters.search.trim());
-    }
-    const qs = params.toString();
-    return qs.length > 0 ? `?${qs}` : "";
-  }, [filters]);
-
   const fetchItems = useCallback(async () => {
     if (abortRef.current) {
       abortRef.current.abort();
@@ -38,32 +22,29 @@ export const FetchAllItemsProvider = ({
     abortRef.current = controller;
     setLoading(true);
     try {
-      const response = await fetch(getURL(`Nomenclature${queryString}`), {
-        method: "GET",
-        headers: {
-          accept: "text/plain, application/json",
-        },
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        getURL(
+          `Nomenclature${
+            filters.search !== undefined && filters.search !== ""
+              ? `/search?term=${filters.search}`
+              : ""
+          }`
+        ),
+        {
+          method: "GET",
+          headers: {
+            accept: "text/plain, application/json",
+          },
+          signal: controller.signal,
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Request failed: ${response.status}`);
       }
 
-      const contentType = response.headers.get("content-type") || "";
-      let payload: unknown;
-      if (contentType.includes("application/json")) {
-        payload = await response.json();
-      } else {
-        // Backend may return JSON with text/plain; try to parse
-        const text = await response.text();
-        try {
-          payload = JSON.parse(text);
-        } catch {
-          // If not JSON, fallback to empty list
-          payload = [];
-        }
-      }
+      const payload = ((await response.json()) as { data: Item[] })["data"];
+      console.log(payload);
 
       const items = Array.isArray(payload) ? (payload as Item[]) : [];
       setData(items);
@@ -74,7 +55,7 @@ export const FetchAllItemsProvider = ({
     } finally {
       setLoading(false);
     }
-  }, [queryString]);
+  }, [filters.search]);
 
   useEffect(() => {
     fetchItems();

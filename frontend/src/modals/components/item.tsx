@@ -25,21 +25,24 @@ const addItemInCart = (userId: number, item: Item) => {
 
 export const ItemModal = () => {
   const { hasInFavorite, toggleFavorite } = useFetchFavorites();
-  const { data } = useModalItem();
+  const { data, isLoading } = useModalItem();
   const { telegramId } = useUser();
 
-  if (data === undefined) {
+  if (data === undefined || isLoading) {
     return <Spinner />;
   }
 
   return (
     <div className="w-full min-h-dvh h-auto">
       <div className="flex flex-col w-full bg-[#F3F3F3] h-max">
-        <div className="flex pt-16 gap-4 w-full bg-white rounded-b-[12px] pb-4.5 px-2">
-          <img src="image.png" className="w-[30%] h-auto rounded-[8px]" />
+        <div className="flex flex-col sm:flex-row pt-16 gap-4 w-full bg-white rounded-b-[12px] pb-4.5 px-2">
+          <img
+            src="image.png"
+            className="w-full h-auto max-h-[35vh] rounded-[8px] object-cover"
+          />
           <div className="w-full justify-center flex flex-col">
-            <h1 className="font-bold text-2xl">{data.name}</h1>
-            <p>
+            <h1 className="font-bold text-md w-full">{data.name}</h1>
+            <p className="text-sm">
               Трубы стальные бесшовные передельные для производства муфт к
               обсадным трубам
             </p>
@@ -100,21 +103,23 @@ export const ItemModal = () => {
               <DrawerTrigger>
                 <Button
                   size="lg"
-                  className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
+                  className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98 w-full"
                 >
                   Заказать
                 </Button>
               </DrawerTrigger>
               <DrawerContent>
-                <Input placeholder="Введите длину, м" />
-                <Input placeholder="Введите длину, м" />
-                <Button
-                  size="lg"
-                  className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
-                  onClick={() => addItemInCart(telegramId, data)}
-                >
-                  Добавить в корзину
-                </Button>
+                <div className="flex gap-2 flex-col px-4 pt-4 pb-8">
+                  <Input placeholder="Введите длину, м" />
+                  <Input placeholder="Введите длину, м" />
+                  <Button
+                    size="lg"
+                    className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
+                    onClick={() => addItemInCart(telegramId, data)}
+                  >
+                    Добавить в корзину
+                  </Button>
+                </div>
               </DrawerContent>
             </Drawer>
             <Button
@@ -124,8 +129,8 @@ export const ItemModal = () => {
               onClick={() => toggleFavorite(data)}
             >
               {hasInFavorite(data.id)
-                ? "Добавить в избранное"
-                : "Удалить из избранного"}
+                ? "Удалить из избранного"
+                : "Добавить в избранное"}
             </Button>
           </div>
         </div>

@@ -27,14 +27,17 @@ export const ItemCardForFavorite = ({ item }: { item: ItemType }) => {
     <Item
       variant="outline"
       className="relative p-0 w-full gap-2 pb-2 border-0 bg-none sm:flex-row flex-col sm:justify-between"
-      onClick={showModal}
     >
       <div className="w-full sm:w-auto h-auto flex gap-2">
-        <ItemMedia variant="image" className="w-[96px] h-auto">
+        <ItemMedia
+          variant="image"
+          className="w-[96px] h-auto"
+          onClick={showModal}
+        >
           <img src="/image.png" className="w-full h-auto" />
         </ItemMedia>
         <ItemContent className="w-full justify-center">
-          <ItemTitle className="text-md font-medium text-[18px] uppercase pl-2">
+          <ItemTitle className="w-full font-medium text-[14px] max-w-[400px] uppercase px-2 text-ellipsis wrap-break-word">
             {item.name}
           </ItemTitle>
           <ItemTitle className="text-xs font-medium pl-2 pt-2">
