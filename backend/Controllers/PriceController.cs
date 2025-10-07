@@ -5,103 +5,23 @@ using backend.Models.Entities;
 using backend.Data;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Logging;
+using backend.Models.DTOs.Price;
 
 namespace backend.Controllers
 {
-    /// <summary>
-    /// Контроллер для управления ценами на трубы
-    /// </summary>
+
     [ApiController]
     [Route("api/[controller]")]
     [SwaggerTag("Управление ценами на трубы - создание, чтение, обновление и удаление цен")]
     public class PricesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILogger<PricesController> _logger; // ДОБАВЛЕНО: поле для логгера
+        private readonly ILogger<PricesController> _logger;
 
-        // ДОБАВЛЕНО: logger в конструктор
         public PricesController(ApplicationDbContext context, ILogger<PricesController> logger)
         {
             _context = context;
-            _logger = logger; // Инициализация логгера
-        }
-        
-        public class PaginatedResponse<T>
-        {
-            [JsonPropertyName("data")]
-            public List<T> Data { get; set; } = new List<T>();
-
-            [JsonPropertyName("page")]
-            public int Page { get; set; }
-
-            [JsonPropertyName("pageSize")]
-            public int PageSize { get; set; }
-
-            [JsonPropertyName("totalCount")]
-            public int TotalCount { get; set; }
-
-            [JsonPropertyName("totalPages")]
-            public int TotalPages { get; set; }
-
-            [JsonPropertyName("hasNextPage")]
-            public bool HasNextPage { get; set; }
-
-            [JsonPropertyName("hasPreviousPage")]
-            public bool HasPreviousPage { get; set; }
-        }
-
-        /// <summary>
-        /// DTO для обновления цены
-        /// </summary>
-        public class UpdatePriceRequest
-        {
-            [SwaggerParameter("Цена за тонну на базовом пороге", Required = true)]
-            [Required]
-            [Range(0, double.MaxValue)]
-            public decimal PriceT { get; set; }
-
-            [SwaggerParameter("Порог объема в тоннах для цены PriceT1")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceLimitT1 { get; set; }
-
-            [SwaggerParameter("Цена за тонну при достижении PriceLimitT1")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceT1 { get; set; }
-
-            [SwaggerParameter("Порог объема в тоннах для цены PriceT2")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceLimitT2 { get; set; }
-
-            [SwaggerParameter("Цена за тонну при достижении PriceLimitT2")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceT2 { get; set; }
-
-            [SwaggerParameter("Цена за метр на базовом пороге", Required = true)]
-            [Required]
-            [Range(0, double.MaxValue)]
-            public decimal PriceM { get; set; }
-
-            [SwaggerParameter("Порог объема в метрах для PriceM1")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceLimitM1 { get; set; }
-
-            [SwaggerParameter("Цена за метр при достижении PriceLimitM1")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceM1 { get; set; }
-
-            [SwaggerParameter("Порог объема в метрах для PriceM2")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceLimitM2 { get; set; }
-
-            [SwaggerParameter("Цена за метр при достижении PriceLimitM2")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceM2 { get; set; }
-
-            [SwaggerParameter("Ставка НДС в процентах", Required = true)]
-            [Required]
-            [Range(0, 100)]
-            public decimal NDS { get; set; }
+            _logger = logger;
         }
 
         [HttpGet("{productId}/{stockId}")]
@@ -232,27 +152,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Мета-информация о пагинации
-        /// </summary>
-        public class Meta
-        {
-            [JsonPropertyName("totalPages")]
-            public int TotalPages { get; set; }
-
-            [JsonPropertyName("page")]
-            public int Page { get; set; }
-
-            [JsonPropertyName("pageLimit")]
-            public int PageLimit { get; set; }
-
-            [JsonPropertyName("totalCount")]
-            public int TotalCount { get; set; }
-        }
-
-        /// <summary>
-        /// Результат с пагинацией
-        /// </summary>
         public class PaginatedResult<T>
         {
             [JsonPropertyName("data")]
@@ -432,55 +331,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// DTO для частичного обновления цены
-        /// </summary>
-        public class PricePatchRequest
-        {
-            [JsonPropertyName("nds")]
-            [Range(0, 100)]
-            public decimal? NDS { get; set; }
-            
-            [JsonPropertyName("priceT")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceT { get; set; }
-            
-            [JsonPropertyName("priceLimitT1")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceLimitT1 { get; set; }
-            
-            [JsonPropertyName("priceT1")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceT1 { get; set; }
-            
-            [JsonPropertyName("priceLimitT2")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceLimitT2 { get; set; }
-            
-            [JsonPropertyName("priceT2")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceT2 { get; set; }
-            
-            [JsonPropertyName("priceM")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceM { get; set; }
-            
-            [JsonPropertyName("priceLimitM1")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceLimitM1 { get; set; }
-            
-            [JsonPropertyName("priceM1")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceM1 { get; set; }
-            
-            [JsonPropertyName("priceLimitM2")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceLimitM2 { get; set; }
-            
-            [JsonPropertyName("priceM2")]
-            [Range(0, double.MaxValue)]
-            public decimal? PriceM2 { get; set; }
-        }
 
         [HttpPost]
         [SwaggerOperation(
@@ -544,18 +394,5 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// DTO для создания новой цены
-        /// </summary>
-        public class CreatePriceRequest : UpdatePriceRequest
-        {
-            [SwaggerParameter("ID товара из номенклатуры", Required = true)]
-            [Required]
-            public int ProductId { get; set; }
-            
-            [SwaggerParameter("ID склада", Required = true)]
-            [Required]
-            public string StockId { get; set; } = string.Empty;
-        }
     }
 }
