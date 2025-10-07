@@ -4,11 +4,14 @@ import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import type { Item } from "@/models/item";
+import { Panel } from "@/panels";
+import { useActiveModal } from "@/providers/active-modal";
+import { useActivePanel } from "@/providers/active-panel";
 import { useFetchFavorites } from "@/providers/favorites";
 import { useModalItem } from "@/providers/modal-item";
 import { useUser } from "@/providers/user";
 
-const addItemInCart = (userId: number, item: Item) => {
+const _addItemInCart = (userId: number, item: Item) => {
   fetch(getURL(`/Cart/${userId}/items`), {
     method: "POST",
     body: JSON.stringify({
@@ -24,9 +27,19 @@ const addItemInCart = (userId: number, item: Item) => {
 };
 
 export const ItemModal = () => {
+  const { closeModal } = useActiveModal();
+  const { setActivePanel } = useActivePanel();
   const { hasInFavorite, toggleFavorite } = useFetchFavorites();
   const { data, isLoading } = useModalItem();
   const { telegramId } = useUser();
+
+  const addInCart = () => {
+    if (data !== undefined) {
+      _addItemInCart(telegramId, data);
+      closeModal();
+      setActivePanel(Panel.Cart);
+    }
+  };
 
   if (data === undefined || isLoading) {
     return <Spinner />;
@@ -115,7 +128,7 @@ export const ItemModal = () => {
                   <Button
                     size="lg"
                     className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
-                    onClick={() => addItemInCart(telegramId, data)}
+                    onClick={() => addInCart()}
                   >
                     Добавить в корзину
                   </Button>

@@ -37,7 +37,7 @@ export const ItemCardForFavorite = ({ item }: { item: ItemType }) => {
           <img src="/image.png" className="w-full h-auto" />
         </ItemMedia>
         <ItemContent className="w-full justify-center">
-          <ItemTitle className="w-full font-medium text-[14px] max-w-[400px] uppercase px-2 text-ellipsis wrap-break-word">
+          <ItemTitle className="flex w-full font-medium text-[14px] max-w-[400px] line-clamp-3 uppercase px-2 text-ellipsis wrap-break-word">
             {item.name}
           </ItemTitle>
           <ItemTitle className="text-xs font-medium pl-2 pt-2">

@@ -44,7 +44,6 @@ export const FetchAllItemsProvider = ({
       }
 
       const payload = ((await response.json()) as { data: Item[] })["data"];
-      console.log(payload);
 
       const items = Array.isArray(payload) ? (payload as Item[]) : [];
       setData(items);
