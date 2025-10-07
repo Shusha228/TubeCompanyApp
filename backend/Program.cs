@@ -43,9 +43,16 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:8080")
+        policy.WithOrigins("http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "https://t.me",             // Telegram production
+        "https://telegram.me",      // Telegram production
+        "https://web.telegram.org", // Telegram test
+        "https://webtg.org")         // Telegram test)
         .AllowAnyMethod()
-        .AllowAnyHeader();
+        .AllowAnyHeader()
+        .AllowCredentials();
     });
 });
 
