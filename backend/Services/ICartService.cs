@@ -8,7 +8,10 @@ namespace backend.Services
     public interface ICartService
     {
         Task<bool> ValidateUserExistsAsync(int userId);
-        Task<CartItem> AddToCartAsync(int userId, string stockId, int productId, string productName, decimal quantity, bool isInMeters, decimal unitPrice, decimal finalPrice);
+
+        Task<CartItem> AddToCartAsync(int userId, string stockId, int productId, string productName, decimal quantity,
+            bool isInMeters, decimal unitPrice, decimal finalPrice);
+
         Task<bool> RemoveFromCartAsync(int userId, string stockId, int productId);
         Task ClearCartAsync(int userId);
         Task<List<CartItem>> GetCartItemsAsync(int userId);
@@ -24,19 +27,24 @@ namespace backend.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<CartService> _logger;
+        private readonly ITelegramUserService _telegramUserService;
 
-        public CartService(ApplicationDbContext context, ILogger<CartService> logger)
+        public CartService(
+            ApplicationDbContext context,
+            ILogger<CartService> logger,
+            ITelegramUserService telegramUserService)
         {
             _context = context;
             _logger = logger;
+            _telegramUserService = telegramUserService;
         }
 
         public async Task<bool> ValidateUserExistsAsync(int userId)
         {
             try
             {
-                return await _context.CustomerInfos
-                    .AnyAsync(c => c.UserId == userId);
+                var telegramUser = await _telegramUserService.GetByIdAsync(userId);
+                return telegramUser != null;
             }
             catch (Exception ex)
             {
@@ -45,19 +53,19 @@ namespace backend.Services
             }
         }
 
-        public async Task<CartItem> AddToCartAsync(int userId, string stockId, int productId, string productName, decimal quantity, bool isInMeters, decimal unitPrice, decimal finalPrice)
+        public async Task<CartItem> AddToCartAsync(int userId, string stockId, int productId, string productName,
+            decimal quantity, bool isInMeters, decimal unitPrice, decimal finalPrice)
         {
             try
             {
-                // Проверка существования пользователя
-                // if (!await ValidateUserExistsAsync(userId))
-                // {
-                //     throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе. Пожалуйста, заполните информацию о себе перед добавлением товаров в корзину.");
-                // }
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+                }
 
                 var stockExists = await _context.Stocks
                     .AnyAsync(s => s.IDStock == stockId);
-                
+
                 if (!stockExists)
                 {
                     throw new InvalidOperationException($"Склад с ID '{stockId}' не найден");
@@ -65,7 +73,7 @@ namespace backend.Services
 
                 var productExists = await _context.Nomenclatures
                     .AnyAsync(p => p.ID == productId);
-                
+
                 if (!productExists)
                 {
                     throw new InvalidOperationException($"Товар с ID '{productId}' не найден");
@@ -73,7 +81,7 @@ namespace backend.Services
 
                 var productInStock = await _context.Prices
                     .AnyAsync(ps => ps.IDStock == stockId && ps.ID == productId);
-                
+
                 if (!productInStock)
                 {
                     throw new InvalidOperationException($"Товар с ID '{productId}' недоступен на складе '{stockId}'");
@@ -82,7 +90,9 @@ namespace backend.Services
                 decimal calculatedFinalPrice = unitPrice * quantity;
 
                 var existingItem = await _context.CartItems
-                    .FirstOrDefaultAsync(c => c.UserId == userId && c.StockId == stockId && c.ProductId == productId && c.IsInMeters == isInMeters);
+                    .FirstOrDefaultAsync(c =>
+                        c.UserId == userId && c.StockId == stockId && c.ProductId == productId &&
+                        c.IsInMeters == isInMeters);
 
                 if (existingItem != null)
                 {
@@ -93,7 +103,8 @@ namespace backend.Services
                     _context.CartItems.Update(existingItem);
                     await _context.SaveChangesAsync();
 
-                    _logger.LogInformation($"Updated cart item for user {userId}, stock {stockId}, product {productId}, isInMeters: {isInMeters}, new quantity: {existingItem.Quantity}");
+                    _logger.LogInformation(
+                        $"Updated cart item for user {userId}, stock {stockId}, product {productId}, isInMeters: {isInMeters}, new quantity: {existingItem.Quantity}");
                     return existingItem;
                 }
                 else
@@ -115,7 +126,8 @@ namespace backend.Services
                     _context.CartItems.Add(cartItem);
                     await _context.SaveChangesAsync();
 
-                    _logger.LogInformation($"Added new cart item for user {userId}, stock {stockId}, product {productId}, isInMeters: {isInMeters}, quantity: {quantity}");
+                    _logger.LogInformation(
+                        $"Added new cart item for user {userId}, stock {stockId}, product {productId}, isInMeters: {isInMeters}, quantity: {quantity}");
                     return cartItem;
                 }
             }
@@ -130,7 +142,6 @@ namespace backend.Services
         {
             try
             {
-                // Проверка существования пользователя
                 if (!await ValidateUserExistsAsync(userId))
                 {
                     throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
@@ -152,7 +163,8 @@ namespace backend.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error removing from cart for user {userId}, stock {stockId}, product {productId}");
+                _logger.LogError(ex,
+                    $"Error removing from cart for user {userId}, stock {stockId}, product {productId}");
                 throw;
             }
         }
@@ -161,7 +173,6 @@ namespace backend.Services
         {
             try
             {
-                // Проверка существования пользователя
                 if (!await ValidateUserExistsAsync(userId))
                 {
                     throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
@@ -190,7 +201,6 @@ namespace backend.Services
         {
             try
             {
-                // Проверка существования пользователя
                 if (!await ValidateUserExistsAsync(userId))
                 {
                     throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
@@ -212,7 +222,6 @@ namespace backend.Services
         {
             try
             {
-                // Проверка существования пользователя
                 if (!await ValidateUserExistsAsync(userId))
                 {
                     throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
@@ -221,7 +230,7 @@ namespace backend.Services
                 if (from < 0) throw new ArgumentException("From cannot be negative");
                 if (to <= from) throw new ArgumentException("To must be greater than from");
                 if (to - from > 100) throw new ArgumentException("Page size cannot exceed 100 items");
-                
+
                 var totalCount = await _context.CartItems
                     .Where(c => c.UserId == userId)
                     .CountAsync();
@@ -256,11 +265,11 @@ namespace backend.Services
             }
         }
 
-        public async Task<CartItem?> UpdateCartItemQuantityAsync(int userId, string stockId, int productId, decimal newQuantity)
+        public async Task<CartItem?> UpdateCartItemQuantityAsync(int userId, string stockId, int productId,
+            decimal newQuantity)
         {
             try
             {
-                // Проверка существования пользователя
                 if (!await ValidateUserExistsAsync(userId))
                 {
                     throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
@@ -287,12 +296,14 @@ namespace backend.Services
                 _context.CartItems.Update(cartItem);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Updated cart item quantity for user {userId}, stock {stockId}, product {productId}, new quantity: {newQuantity}");
+                _logger.LogInformation(
+                    $"Updated cart item quantity for user {userId}, stock {stockId}, product {productId}, new quantity: {newQuantity}");
                 return cartItem;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error updating cart item quantity for user {userId}, stock {stockId}, product {productId}");
+                _logger.LogError(ex,
+                    $"Error updating cart item quantity for user {userId}, stock {stockId}, product {productId}");
                 throw;
             }
         }
@@ -301,7 +312,6 @@ namespace backend.Services
         {
             try
             {
-                // Проверка существования пользователя
                 if (!await ValidateUserExistsAsync(userId))
                 {
                     throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
@@ -322,7 +332,6 @@ namespace backend.Services
         {
             try
             {
-                // Проверка существования пользователя
                 if (!await ValidateUserExistsAsync(userId))
                 {
                     throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
@@ -338,97 +347,98 @@ namespace backend.Services
                 throw;
             }
         }
-        
+
         public async Task<List<CartItem>> SearchInCartAsync(int userId, string searchTerm)
-    {
-        try
         {
-            if (!await ValidateUserExistsAsync(userId))
+            try
             {
-                throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
-            }
-
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                return await GetCartItemsAsync(userId);
-            }
-
-            var term = searchTerm.ToLower().Trim();
-            
-            return await _context.CartItems
-                .Where(c => c.UserId == userId &&
-                           (c.ProductName.ToLower().Contains(term) ||
-                            c.ProductId.ToString().Contains(term) ||
-                            c.StockId.ToLower().Contains(term) ||
-                            (c.IsInMeters ? "метры" : "тонны").Contains(term)))
-                .OrderByDescending(c => c.AddedAt)
-                .ToListAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error searching in cart for user {userId} with term: {searchTerm}");
-            throw;
-        }
-    }
-
-    public async Task<CartPaginationResponse> SearchInCartPagedAsync(int userId, string searchTerm, int from = 0, int to = 20)
-    {
-        try
-        {
-            if (!await ValidateUserExistsAsync(userId))
-            {
-                throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
-            }
-
-            if (from < 0) throw new ArgumentException("From cannot be negative");
-            if (to <= from) throw new ArgumentException("To must be greater than from");
-            if (to - from > 100) throw new ArgumentException("Page size cannot exceed 100 items");
-
-            var pageSize = to - from;
-            var currentPage = from / pageSize;
-
-            var query = _context.CartItems
-                .Where(c => c.UserId == userId);
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                var term = searchTerm.ToLower().Trim();
-                query = query.Where(c => 
-                    c.ProductName.ToLower().Contains(term) ||
-                    c.ProductId.ToString().Contains(term) ||
-                    c.StockId.ToLower().Contains(term) ||
-                    (c.IsInMeters ? "метры" : "тонны").Contains(term));
-            }
-
-            var totalCount = await query.CountAsync();
-
-            var items = await query
-                .OrderByDescending(c => c.AddedAt)
-                .Skip(from)
-                .Take(pageSize)
-                .ToListAsync();
-
-            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-            return new CartPaginationResponse
-            {
-                Items = items,
-                Meta = new PaginationMeta
+                if (!await ValidateUserExistsAsync(userId))
                 {
-                    TotalPages = totalPages,
-                    Page = currentPage,
-                    PageLimit = pageSize,
-                    TotalCount = totalCount,
-                    SearchTerm = searchTerm
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
                 }
-            };
+
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    return await GetCartItemsAsync(userId);
+                }
+
+                var term = searchTerm.ToLower().Trim();
+
+                return await _context.CartItems
+                    .Where(c => c.UserId == userId &&
+                                (c.ProductName.ToLower().Contains(term) ||
+                                 c.ProductId.ToString().Contains(term) ||
+                                 c.StockId.ToLower().Contains(term) ||
+                                 (c.IsInMeters ? "метры" : "тонны").Contains(term)))
+                    .OrderByDescending(c => c.AddedAt)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error searching in cart for user {userId} with term: {searchTerm}");
+                throw;
+            }
         }
-        catch (Exception ex)
+
+        public async Task<CartPaginationResponse> SearchInCartPagedAsync(int userId, string searchTerm, int from = 0,
+            int to = 20)
         {
-            _logger.LogError(ex, $"Error searching in cart paged for user {userId} with term: {searchTerm}");
-            throw;
+            try
+            {
+                if (!await ValidateUserExistsAsync(userId))
+                {
+                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+                }
+
+                if (from < 0) throw new ArgumentException("From cannot be negative");
+                if (to <= from) throw new ArgumentException("To must be greater than from");
+                if (to - from > 100) throw new ArgumentException("Page size cannot exceed 100 items");
+
+                var pageSize = to - from;
+                var currentPage = from / pageSize;
+
+                var query = _context.CartItems
+                    .Where(c => c.UserId == userId);
+
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    var term = searchTerm.ToLower().Trim();
+                    query = query.Where(c =>
+                        c.ProductName.ToLower().Contains(term) ||
+                        c.ProductId.ToString().Contains(term) ||
+                        c.StockId.ToLower().Contains(term) ||
+                        (c.IsInMeters ? "метры" : "тонны").Contains(term));
+                }
+
+                var totalCount = await query.CountAsync();
+
+                var items = await query
+                    .OrderByDescending(c => c.AddedAt)
+                    .Skip(from)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+                return new CartPaginationResponse
+                {
+                    Items = items,
+                    Meta = new PaginationMeta
+                    {
+                        TotalPages = totalPages,
+                        Page = currentPage,
+                        PageLimit = pageSize,
+                        TotalCount = totalCount,
+                        SearchTerm = searchTerm
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error searching in cart paged for user {userId} with term: {searchTerm}");
+                throw;
+            }
         }
-    }
     }
 
     public class CartPaginationResponse

@@ -64,6 +64,7 @@ builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationSer
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<ITelegramUserService, TelegramUserService>();
 builder.Services.AddScoped<IUpdateService, UpdateService>();
+
 builder.Services.AddSingleton<ITelegramBotClient>(provider =>
 {
     var configuration = provider.GetRequiredService<IConfiguration>();
@@ -102,6 +103,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Применяем миграции
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
