@@ -4,12 +4,18 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { ItemCardForFavorite } from "@/components/ui/item-card-favorite";
-import { FetchFavoritesProvider } from "@/providers/favorites";
+import { useFetchFavorites } from "@/providers/favorites";
 import { SearchIcon } from "lucide-react";
 
 export const FavoritesList = () => {
-  //const {} = useFetchFavorites();
-  return <></>;
+  const { data } = useFetchFavorites();
+  return (
+    <>
+      {data.map((el) => (
+        <ItemCardForFavorite key={el.id} />
+      ))}
+    </>
+  );
 };
 
 export const FavoritesPanel = () => {
@@ -31,11 +37,7 @@ export const FavoritesPanel = () => {
       <div className="w-full h-[10px]"></div>
       <div className="pb-18 bg-white rounded-t-[12px] w-full pt-2.5 md:pt-4.5">
         <div className="grid grid-cols-1 gap-2 px-2 md:px-4">
-          <FetchFavoritesProvider>
-            {[...Array(24).keys()].map((el) => (
-              <ItemCardForFavorite key={el} />
-            ))}
-          </FetchFavoritesProvider>
+          <FavoritesList />
         </div>
       </div>
     </div>

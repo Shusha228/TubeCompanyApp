@@ -14,6 +14,7 @@ export const UserProvider = ({ children }: { children: JSX.Element }) => {
           .filter((el) => el !== undefined)
           .join(" "),
         role: UserRole.User,
+        photo: user?.photo_url,
       }}
     >
       {children}
