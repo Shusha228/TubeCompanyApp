@@ -1,19 +1,16 @@
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/modals/models/modal";
-import type { User } from "@/models/user";
 import { UserRole } from "@/models/user-role";
 import { useActiveModal } from "@/providers/active-modal";
+import { useUser } from "@/providers/user";
 import { Avatar } from "@radix-ui/react-avatar";
 import { HelpCircleIcon, History, LayoutGrid, Plus } from "lucide-react";
 
-const user: User = {
-  name: "Смирнов Евгений Сергеевич",
-  role: UserRole.Admin,
-};
-
 export const ProfilePanel = () => {
+  const user = useUser();
   const { showModal } = useActiveModal();
+
   const fallback = user.name
     .split(" ")
     .slice(0, 2)
@@ -25,7 +22,7 @@ export const ProfilePanel = () => {
       <div className="flex pt-6 gap-4 w-full bg-white rounded-b-[12px] pb-4.5">
         <div className="flex w-full gap-4 items-center px-4">
           <Avatar className="w-24 h-24">
-            <AvatarImage src="/avatar.svg"></AvatarImage>
+            <AvatarImage src={user.photo}></AvatarImage>
             <AvatarFallback className="text-lg">{fallback}</AvatarFallback>
           </Avatar>
           <div className="w-auto max-w-full">

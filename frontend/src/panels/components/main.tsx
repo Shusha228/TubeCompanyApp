@@ -92,22 +92,106 @@ const checkBoxes = [
   {
     id: "8",
     name: "Бесшовные трубы промышленного назначения",
-    sub: [],
+    sub: [
+      {
+        id: "12",
+        name: "Трубы общего назначения",
+        sub: [],
+      },
+      {
+        id: "13",
+        name: "Котельные трубы",
+        sub: [],
+      },
+      {
+        id: "14",
+        name: "Крекинговые трубы",
+        sub: [],
+      },
+      {
+        id: "15",
+        name: "Нержавеющие трубы",
+        sub: [],
+      },
+      {
+        id: "16",
+        name: "Подшипниковые трубы",
+        sub: [],
+      },
+    ],
   },
   {
     id: "9",
     name: "Сварные трубы промышленного назначения",
-    sub: [],
+    sub: [
+      {
+        id: "17",
+        name: "Трубы общего назначения",
+        sub: [],
+      },
+      {
+        id: "18",
+        name: "Водогазопроводные",
+        sub: [],
+      },
+      {
+        id: "19",
+        name: "Профильные",
+        sub: [],
+      },
+      {
+        id: "20",
+        name: "Оцинкованные",
+        sub: [],
+      },
+    ],
   },
   {
     id: "10",
     name: "Антикоррозионные покрытия на трубы",
-    sub: [],
+    sub: [
+      {
+        id: "21",
+        name: "Наружное одно- и двухслойное эпоксидное",
+        sub: [],
+      },
+      {
+        id: "22",
+        name: "Наружное двух- и трехслойное полиэтиленовое или полипропиленовое",
+        sub: [],
+      },
+      {
+        id: "23",
+        name: "Наружное теплогидроизоляционное ППУ в оболочке",
+        sub: [],
+      },
+      {
+        id: "24",
+        name: "Внутреннее гладкостное",
+        sub: [],
+      },
+      {
+        id: "25",
+        name: "Внутреннее антикоррозионное типа Amercoat, Scotchcoat",
+        sub: [],
+      },
+    ],
   },
   {
     id: "11",
     name: "Заготовка непрерывнолитая",
-    sub: [],
+    sub: [
+      {
+        id: "26",
+        name: "Круглого сечения",
+        sub: [],
+      },
+      {
+        id: "27",
+        name: "Квадратного сечения",
+        sub: [],
+      },
+    ],
   },
 ];
 
@@ -184,82 +268,85 @@ export const MainPanel = () => {
               </DrawerTrigger>
               <DrawerContent>
                 <DrawerFooter className="min-h-[484px]">
-                  <DrawerTitle className="text-start">Склад</DrawerTitle>
-                  <div className="flex flex-col gap-2">
-                    <InputGroup>
-                      <InputGroupInput
-                        placeholder="Введите город"
-                        value={citySearch}
-                        onChange={(e) => setCitySearch(e.currentTarget.value)}
-                      />
-                      <InputGroupAddon>
-                        <SearchIcon />
-                      </InputGroupAddon>
-                      {allowDeleteCity && (
-                        <InputGroupButton
-                          onClick={() => setSearchableCityNull()}
-                        >
-                          <X />
-                        </InputGroupButton>
-                      )}
-                    </InputGroup>
-                    {findedCities.length > 0 && (
-                      <div className="flex flex-col gap-1">
-                        {findedCities.map((el, i) => (
-                          <Button
-                            variant="ghost"
-                            key={i}
-                            onClick={() => setSearchableCity(el)}
-                            className="justify-start"
+                  <ScrollArea className="w-full min-h-[400px]">
+                    <ScrollBar orientation="vertical" />
+                    <DrawerTitle className="text-start">Склад</DrawerTitle>
+                    <div className="flex flex-col gap-2">
+                      <InputGroup>
+                        <InputGroupInput
+                          placeholder="Введите город"
+                          value={citySearch}
+                          onChange={(e) => setCitySearch(e.currentTarget.value)}
+                        />
+                        <InputGroupAddon>
+                          <SearchIcon />
+                        </InputGroupAddon>
+                        {allowDeleteCity && (
+                          <InputGroupButton
+                            onClick={() => setSearchableCityNull()}
                           >
-                            {el}
-                          </Button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <DrawerTitle className="pt-2">Вид продукции</DrawerTitle>
-                  <div className="flex flex-col gap-1">
-                    {checkBoxes.map((el) => (
-                      <div key={el.id} className="flex flex-col gap-0">
-                        <div
-                          className="flex gap-1 py-2"
-                          onClick={() => toggleCheckBox(el.id)}
-                        >
-                          <Checkbox
-                            checked={activeCheckboxes.includes(el.id)}
-                          />
-                          <Label>{el.name}</Label>
-                        </div>
-                        {activeCheckboxes.includes(el.id) &&
-                          el.sub.map((subEl) => (
-                            <div
-                              key={subEl.id}
-                              className="flex gap-1 p-2"
-                              onClick={() => toggleCheckBox(subEl.id)}
+                            <X />
+                          </InputGroupButton>
+                        )}
+                      </InputGroup>
+                      {findedCities.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                          {findedCities.map((el, i) => (
+                            <Button
+                              variant="ghost"
+                              key={i}
+                              onClick={() => setSearchableCity(el)}
+                              className="justify-start"
                             >
-                              <Checkbox
-                                checked={activeCheckboxes.includes(subEl.id)}
-                              />
-                              <Label>{subEl.name}</Label>
-                            </div>
+                              {el}
+                            </Button>
                           ))}
-                      </div>
-                    ))}
-                  </div>
-                  <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98">
-                    Сохранить
-                  </Button>
-                  <DrawerClose>
-                    <Button
-                      asChild={true}
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-4 top-4"
-                    >
-                      <X className="w-6 h-6 opacity-50" />
+                        </div>
+                      )}
+                    </div>
+                    <DrawerTitle className="pt-2">Вид продукции</DrawerTitle>
+                    <div className="flex flex-col gap-1">
+                      {checkBoxes.map((el) => (
+                        <div key={el.id} className="flex flex-col gap-0">
+                          <div
+                            className="flex gap-1 py-2"
+                            onClick={() => toggleCheckBox(el.id)}
+                          >
+                            <Checkbox
+                              checked={activeCheckboxes.includes(el.id)}
+                            />
+                            <Label>{el.name}</Label>
+                          </div>
+                          {activeCheckboxes.includes(el.id) &&
+                            el.sub.map((subEl) => (
+                              <div
+                                key={subEl.id}
+                                className="flex gap-1 p-2"
+                                onClick={() => toggleCheckBox(subEl.id)}
+                              >
+                                <Checkbox
+                                  checked={activeCheckboxes.includes(subEl.id)}
+                                />
+                                <Label>{subEl.name}</Label>
+                              </div>
+                            ))}
+                        </div>
+                      ))}
+                    </div>
+                    <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98">
+                      Сохранить
                     </Button>
-                  </DrawerClose>
+                    <DrawerClose>
+                      <Button
+                        asChild={true}
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-4 -top-2"
+                      >
+                        <X className="w-6 h-6 opacity-50" />
+                      </Button>
+                    </DrawerClose>
+                  </ScrollArea>
                 </DrawerFooter>
               </DrawerContent>
             </Drawer>

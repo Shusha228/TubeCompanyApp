@@ -1,23 +1,29 @@
 import { ArrowLeft, Book, Home, ShoppingCartIcon } from "lucide-react";
-import { Avatar, AvatarFallback } from "./components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 import { Button } from "./components/ui/button";
 import { ScrollArea, ScrollBar } from "./components/ui/scroll-area";
 import { cn } from "./lib/utils";
 import { Panel } from "./panels";
 import { useActiveModal } from "./providers/active-modal";
 import { useActivePanel } from "./providers/active-panel";
+import { useUser } from "./providers/user";
 
 function App() {
   const { activePanel, setActivePanel, _activeObject } = useActivePanel();
   const { activeModal, closeModal } = useActiveModal();
+
+  const PanelComponent = activePanel;
+  const ModalComponent = activeModal;
+  const user = useUser();
+
   return (
     <>
-      {activePanel()}
+      <PanelComponent />
 
-      {activeModal && (
+      {ModalComponent && (
         <div className="fixed w-dvw h-dvh top-0 right-0 z-[10] overflow-hidden">
           <ScrollArea className="relative w-dvw h-dvh">
-            {activeModal()}
+            <ModalComponent />
 
             <Button
               variant="ghost"
@@ -60,6 +66,7 @@ function App() {
           className="w-full py-2 flex justify-center"
         >
           <Avatar>
+            <AvatarImage src={user.photo} />
             <AvatarFallback
               className={cn(
                 "text-white",
