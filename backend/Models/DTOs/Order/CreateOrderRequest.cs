@@ -1,4 +1,4 @@
-namespace backend.Models.Order
+namespace backend.Models.DTOs.Order
 {
     
     public class CreateOrderRequest
