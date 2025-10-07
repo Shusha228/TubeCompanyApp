@@ -5,7 +5,9 @@ namespace backend.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
 
         public DbSet<ProductType> ProductTypes { get; set; }
         public DbSet<Nomenclature> Nomenclatures { get; set; }
@@ -13,12 +15,11 @@ namespace backend.Data
         public DbSet<Remnant> Remnants { get; set; }
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<Order> Orders { get; set; }
-        
-        // Новые DbSet для корзины и информации о клиентах
+
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<CustomerInfo> CustomerInfos { get; set; }
         public DbSet<TelegramUser> TelegramUsers { get; set; }
-        
+
         public DbSet<PriceUpdate> PriceUpdates { get; set; }
         public DbSet<RemnantUpdate> RemnantUpdates { get; set; }
         public DbSet<StockUpdate> StockUpdates { get; set; }
@@ -40,7 +41,7 @@ namespace backend.Data
                     .IsRequired(false);
             });
 
-            // Nomenclature
+            // Nomenclature - УПРОЩЕННАЯ КОНФИГУРАЦИЯ БЕЗ НАВИГАЦИОННЫХ СВОЙСТВ
             modelBuilder.Entity<Nomenclature>(entity =>
             {
                 entity.HasKey(e => e.ID);
@@ -69,6 +70,7 @@ namespace backend.Data
                 entity.Property(e => e.Koef)
                     .HasColumnType("decimal(10,6)");
 
+                // Связь с ProductType оставляем, но убираем связь с Remnant
                 entity.HasOne<ProductType>()
                     .WithMany()
                     .HasForeignKey(e => e.IDType)
@@ -154,6 +156,7 @@ namespace backend.Data
                 entity.Property(e => e.NDS)
                     .HasColumnType("decimal(5,2)");
 
+                // Связи оставляем, но без навигационных свойств в моделях
                 entity.HasOne<Nomenclature>()
                     .WithMany()
                     .HasForeignKey(e => e.ID)
@@ -165,7 +168,7 @@ namespace backend.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Remnant (составной ключ)
+            // Remnant (составной ключ) - УПРОЩЕННАЯ КОНФИГУРАЦИЯ БЕЗ НАВИГАЦИОННЫХ СВОЙСТВ
             modelBuilder.Entity<Remnant>(entity =>
             {
                 entity.HasKey(e => new { e.ID, e.IDStock });
@@ -195,26 +198,17 @@ namespace backend.Data
                 entity.Property(e => e.AvgTubeWeight)
                     .HasColumnType("decimal(10,2)");
 
-                // entity.HasOne<Nomenclature>()
-                //     .WithMany()
-                //     .HasForeignKey(e => e.ID)
-                //     .OnDelete(DeleteBehavior.Restrict);
-
-                // entity.HasOne<Stock>()
-                //     .WithMany()
-                //     .HasForeignKey(e => e.IDStock)
-                //     .OnDelete(DeleteBehavior.Restrict);
+                // УБРАНЫ все навигационные свойства для избежания циклических ссылок
             });
 
             // Order
-            // В методе OnModelCreating для Order:
             modelBuilder.Entity<Order>(entity =>
             {
                 entity.HasKey(e => e.Id);
 
                 entity.Property(e => e.Id)
                     .IsRequired()
-                    .HasMaxLength(8); // Для ID формата "A1B2C3D4"
+                    .HasMaxLength(8);
 
                 entity.Property(e => e.TelegramUserId)
                     .IsRequired();
@@ -358,27 +352,7 @@ namespace backend.Data
                     .HasDatabaseName("IX_CustomerInfo_UserId");
             });
 
-            // Индексы для оптимизации
-            modelBuilder.Entity<Nomenclature>()
-                .HasIndex(e => e.IDType)
-                .HasDatabaseName("IX_Nomenclature_IDType");
-
-            modelBuilder.Entity<Price>()
-                .HasIndex(e => e.IDStock)
-                .HasDatabaseName("IX_Price_IDStock");
-
-            modelBuilder.Entity<Remnant>()
-                .HasIndex(e => e.IDStock)
-                .HasDatabaseName("IX_Remnant_IDStock");
-
-            modelBuilder.Entity<Order>()
-                .HasIndex(e => e.TelegramUserId)
-                    .HasDatabaseName("IX_Order_TelegramUserId");
-
-            modelBuilder.Entity<Order>()
-                .HasIndex(e => e.CreatedAt)
-                .HasDatabaseName("IX_Order_CreatedAt");
-
+            // TelegramUser
             modelBuilder.Entity<TelegramUser>(entity =>
             {
                 entity.HasKey(e => e.TelegramUserId);
@@ -429,6 +403,27 @@ namespace backend.Data
                 entity.HasIndex(e => e.Timestamp);
                 entity.HasIndex(e => e.EntityType);
             });
+
+            // Индексы для оптимизации
+            modelBuilder.Entity<Nomenclature>()
+                .HasIndex(e => e.IDType)
+                .HasDatabaseName("IX_Nomenclature_IDType");
+
+            modelBuilder.Entity<Price>()
+                .HasIndex(e => e.IDStock)
+                .HasDatabaseName("IX_Price_IDStock");
+
+            modelBuilder.Entity<Remnant>()
+                .HasIndex(e => e.IDStock)
+                .HasDatabaseName("IX_Remnant_IDStock");
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(e => e.TelegramUserId)
+                .HasDatabaseName("IX_Order_TelegramUserId");
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_Order_CreatedAt");
         }
     }
 }

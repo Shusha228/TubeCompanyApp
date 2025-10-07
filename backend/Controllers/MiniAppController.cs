@@ -21,7 +21,7 @@ namespace backend.Controllers
         [HttpGet("/miniapp")]
         public IActionResult ServeMiniApp()
         {
-            var validationResult = ValidateTelegramWebAppData();
+            /*var validationResult = ValidateTelegramWebAppData();
             
             if (!validationResult.IsValid)
             {
@@ -30,7 +30,7 @@ namespace backend.Controllers
                     error = validationResult.Error,
                     instruction = "Откройте приложение через Telegram бота"
                 });
-            }
+            }*/
 
             var frontendUrl = _configuration["App:FrontendUrl"] ?? "http://localhost:3000";
             
