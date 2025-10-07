@@ -7,7 +7,7 @@ namespace backend.Services
 {
     public interface IOrderService
     {
-        Task<Order> CreateOrderAsync(Models.Order.CreateOrderRequest request);
+        Task<Order> CreateOrderAsync(Models.DTOs.Order.CreateOrderRequest request);
         Task<Order?> GetOrderByIdAsync(string orderId);
         Task<List<Order>> GetUserOrdersAsync(long telegramUserId);
     }
@@ -31,7 +31,7 @@ namespace backend.Services
             _logger = logger;
         }
 
-        public async Task<Order> CreateOrderAsync(Models.Order.CreateOrderRequest request)
+        public async Task<Order> CreateOrderAsync(Models.DTOs.Order.CreateOrderRequest request)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
 

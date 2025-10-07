@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.Services;
 using backend.Models.Entities;
-using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Annotations;
+using backend.Models.DTOs.Cart;
 
 namespace backend.Controllers
 {
@@ -22,11 +22,11 @@ namespace backend.Controllers
 
         [HttpGet("{userId}/paged")]
         [SwaggerOperation(Summary = "Получить корзину с пагинацией")]
-        [SwaggerResponse(200, "Корзина получена", typeof(CartPaginationResponse))]
+        [SwaggerResponse(200, "Корзина получена", typeof(Models.DTOs.Cart.CartPaginationResponse))]
         [SwaggerResponse(400, "Неверные параметры пагинации")]
         [SwaggerResponse(404, "Пользователь не найден")]
         [SwaggerResponse(500, "Ошибка сервера")]
-        public async Task<ActionResult<CartPaginationResponse>> GetCartPaged(
+        public async Task<ActionResult<Models.DTOs.Cart.CartPaginationResponse>> GetCartPaged(
             int userId,
             int from = 0,
             int to = 20)
@@ -298,11 +298,11 @@ namespace backend.Controllers
 
         [HttpGet("{userId}/search/paged")]
         [SwaggerOperation(Summary = "Поиск товаров в корзине с пагинацией")]
-        [SwaggerResponse(200, "Результаты поиска", typeof(CartPaginationResponse))]
+        [SwaggerResponse(200, "Результаты поиска", typeof(Models.DTOs.Cart.CartPaginationResponse))]
         [SwaggerResponse(400, "Неверные параметры")]
         [SwaggerResponse(404, "Пользователь не найден")]
         [SwaggerResponse(500, "Ошибка сервера")]
-        public async Task<ActionResult<CartPaginationResponse>> SearchInCartPaged(
+        public async Task<ActionResult<Models.DTOs.Cart.CartPaginationResponse>> SearchInCartPaged(
             int userId,
             [FromQuery] string term,
             [FromQuery] int from = 0,
@@ -340,34 +340,4 @@ namespace backend.Controllers
         }
     }
 
-    public class AddToCartRequest
-    {
-        public string StockId { get; set; } = string.Empty;
-        public int ProductId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public decimal Quantity { get; set; }
-        public bool IsInMeters { get; set; }
-        public decimal UnitPrice { get; set; }
-        public decimal FinalPrice { get; set; }
-    }
-
-    public class UpdateQuantityRequest
-    {
-        public decimal NewQuantity { get; set; }
-    }
-
-    public class CartPaginationResponse
-    {
-        public List<CartItem> Items { get; set; } = new List<CartItem>();
-        public PaginationMeta Meta { get; set; } = new PaginationMeta();
-    }
-
-    public class PaginationMeta
-    {
-        public int TotalPages { get; set; }
-        public int Page { get; set; }
-        public int PageLimit { get; set; }
-        public int TotalCount { get; set; }
-        public string? SearchTerm { get; set; }
-    }
 }
