@@ -11,6 +11,7 @@ namespace backend.Services
         Task<bool> RemoveFromCartAsync(int userId, string stockId, int productId);
         Task ClearCartAsync(int userId);
         Task<List<CartItem>> GetCartItemsAsync(int userId);
+        Task<CartPaginationResponse> GetCartItemsPagedAsync(int userId, int from, int to);
         Task<CartItem?> UpdateCartItemQuantityAsync(int userId, string stockId, int productId, decimal newQuantity);
         Task<decimal> GetCartTotalAsync(int userId);
         Task<int> GetCartItemsCountAsync(int userId);
@@ -31,7 +32,6 @@ namespace backend.Services
         {
             try
             {
-                // 1. Проверяем существование склада
                 var stockExists = await _context.Stocks
                     .AnyAsync(s => s.IDStock == stockId);
                 
@@ -40,7 +40,6 @@ namespace backend.Services
                     throw new InvalidOperationException($"Склад с ID '{stockId}' не найден");
                 }
 
-                // 2. Проверяем существование товара
                 var productExists = await _context.Nomenclatures
                     .AnyAsync(p => p.ID == productId);
                 
@@ -49,7 +48,6 @@ namespace backend.Services
                     throw new InvalidOperationException($"Товар с ID '{productId}' не найден");
                 }
 
-                // 3. Проверяем, что товар доступен на указанном складе
                 var productInStock = await _context.Prices
                     .AnyAsync(ps => ps.IDStock == stockId && ps.ID == productId);
                 
@@ -58,18 +56,14 @@ namespace backend.Services
                     throw new InvalidOperationException($"Товар с ID '{productId}' недоступен на складе '{stockId}'");
                 }
 
-                // ДОПОЛНЕНИЕ: Рассчитываем финальную цену на сервере
                 decimal calculatedFinalPrice = unitPrice * quantity;
 
-                // ДОПОЛНЕНИЕ: Ищем существующий товар в корзине с учетом isInMeters
                 var existingItem = await _context.CartItems
                     .FirstOrDefaultAsync(c => c.UserId == userId && c.StockId == stockId && c.ProductId == productId && c.IsInMeters == isInMeters);
 
                 if (existingItem != null)
                 {
-                    // Обновляем существующий товар (только если isInMeters совпадает)
                     existingItem.Quantity += quantity;
-                    // ДОПОЛНЕНИЕ: Используем пересчитанную цену
                     existingItem.FinalPrice = existingItem.UnitPrice * existingItem.Quantity;
                     existingItem.UpdatedAt = DateTime.UtcNow;
 
@@ -81,7 +75,6 @@ namespace backend.Services
                 }
                 else
                 {
-                    // Добавляем новый товар (создаем новую запись если isInMeters отличается или товара нет)
                     var cartItem = new CartItem
                     {
                         UserId = userId,
@@ -91,7 +84,6 @@ namespace backend.Services
                         Quantity = quantity,
                         IsInMeters = isInMeters,
                         UnitPrice = unitPrice,
-                        // ДОПОЛНЕНИЕ: Используем пересчитанную цену вместо переданной из запроса
                         FinalPrice = calculatedFinalPrice,
                         AddedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
@@ -111,7 +103,6 @@ namespace backend.Services
             }
         }
 
-        // Остальные методы остаются БЕЗ ИЗМЕНЕНИЙ
         public async Task<bool> RemoveFromCartAsync(int userId, string stockId, int productId)
         {
             try
@@ -176,6 +167,48 @@ namespace backend.Services
             }
         }
 
+        public async Task<CartPaginationResponse> GetCartItemsPagedAsync(int userId, int from, int to)
+        {
+            try
+            {
+                if (from < 0) throw new ArgumentException("From cannot be negative");
+                if (to <= from) throw new ArgumentException("To must be greater than from");
+                if (to - from > 100) throw new ArgumentException("Page size cannot exceed 100 items");
+                
+                var totalCount = await _context.CartItems
+                    .Where(c => c.UserId == userId)
+                    .CountAsync();
+
+                var items = await _context.CartItems
+                    .Where(c => c.UserId == userId)
+                    .OrderByDescending(c => c.AddedAt)
+                    .Skip(from)
+                    .Take(to - from)
+                    .ToListAsync();
+
+                var pageSize = to - from;
+                var currentPage = from / pageSize;
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+                return new CartPaginationResponse
+                {
+                    Items = items,
+                    Meta = new PaginationMeta
+                    {
+                        TotalPages = totalPages,
+                        Page = currentPage,
+                        PageLimit = pageSize,
+                        TotalCount = totalCount
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting paged cart items for user {userId}, from: {from}, to: {to}");
+                throw;
+            }
+        }
+
         public async Task<CartItem?> UpdateCartItemQuantityAsync(int userId, string stockId, int productId, decimal newQuantity)
         {
             try
@@ -190,12 +223,10 @@ namespace backend.Services
 
                 if (newQuantity <= 0)
                 {
-                    // Если количество <= 0, удаляем товар из корзины
                     await RemoveFromCartAsync(userId, stockId, productId);
                     return null;
                 }
 
-                // Пересчитываем цену на основе нового количества
                 cartItem.Quantity = newQuantity;
                 cartItem.FinalPrice = cartItem.UnitPrice * newQuantity;
                 cartItem.UpdatedAt = DateTime.UtcNow;
@@ -242,5 +273,19 @@ namespace backend.Services
                 throw;
             }
         }
+    }
+
+    public class CartPaginationResponse
+    {
+        public List<CartItem> Items { get; set; } = new List<CartItem>();
+        public PaginationMeta Meta { get; set; } = new PaginationMeta();
+    }
+
+    public class PaginationMeta
+    {
+        public int TotalPages { get; set; }
+        public int Page { get; set; }
+        public int PageLimit { get; set; }
+        public int TotalCount { get; set; }
     }
 }
