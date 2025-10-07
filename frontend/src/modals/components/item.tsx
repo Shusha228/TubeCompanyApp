@@ -24,7 +24,7 @@ const _addItemInCart = (
   quantity: number,
   isInMeters: boolean
 ) => {
-  fetch(getURL(`Cart/${userId}/items`), {
+  return fetch(getURL(`Cart/${userId}/items`), {
     method: "POST",
     headers: {
       "Content-Type": "application/json;",
@@ -58,9 +58,10 @@ export const ItemModal = () => {
     if (Number.isNaN(quantity)) return;
 
     if (data !== undefined) {
-      _addItemInCart(telegramId, data, quantity, isInMeter);
-      closeModal();
-      setActivePanel(Panel.Cart);
+      _addItemInCart(telegramId, data, quantity, isInMeter).then(() => {
+        closeModal();
+        setActivePanel(Panel.Cart);
+      });
     }
   };
 

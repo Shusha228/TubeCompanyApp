@@ -1,3 +1,7 @@
+import { Modal } from "@/modals/models/modal";
+import type { Item as ItemType } from "@/models/item";
+import { useActiveModal } from "@/providers/active-modal";
+import { useModalItem } from "@/providers/modal-item";
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "./button";
 import {
@@ -8,7 +12,14 @@ import {
 } from "./dropdown-menu";
 import { Item, ItemContent, ItemMedia, ItemTitle } from "./item";
 
-export const ItemCardForAll = () => {
+export const ItemCardForAll = ({ item }: { item: ItemType }) => {
+  const activeModal = useActiveModal();
+  const modalItem = useModalItem();
+
+  const goToItem = () => {
+    modalItem.showModal(item.id);
+    activeModal.showModal(Modal.Item);
+  };
   return (
     <Item
       variant="outline"
@@ -19,10 +30,10 @@ export const ItemCardForAll = () => {
           <img src="/image.png" className="w-full h-auto" />
         </ItemMedia>
         <ItemContent className="w-full justify-center">
-          <ItemTitle className="text-md font-medium text-[18px] uppercase pl-2">
-            Item
+          <ItemTitle className="flex w-full font-medium text-[14px] max-w-[400px] line-clamp-3 uppercase px-2 text-ellipsis wrap-break-word">
+            {item.name}
           </ItemTitle>
-          <ItemTitle className="text-xs font-medium pl-2 pt-2">
+          <ItemTitle className="flex w-full font-normal opacity-70 text-[12px] max-w-[400px] line-clamp-3 px-2 text-ellipsis wrap-break-word">
             Применяются для крепления нефтяных и газовых скважин в процессе их
             строительства и эксплуатации.
           </ItemTitle>
@@ -37,7 +48,9 @@ export const ItemCardForAll = () => {
           <EllipsisVertical size="18" color="#686868" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem>Перейти к товару</DropdownMenuItem>
+          <DropdownMenuItem onClick={goToItem}>
+            Перейти к товару
+          </DropdownMenuItem>
           <DropdownMenuItem>Редактировать</DropdownMenuItem>
           <DropdownMenuItem variant="destructive">Удалить</DropdownMenuItem>
         </DropdownMenuContent>
