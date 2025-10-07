@@ -39,6 +39,8 @@ export const UserProvider = ({ children }: { children: JSX.Element }) => {
           setUser((u) => ({
             ...u,
             inn: data !== undefined ? data["inn"] : "",
+            phone: data !== undefined ? data["phone"] : "",
+            email: data !== undefined ? data["email"] : "",
           }));
         }
       });

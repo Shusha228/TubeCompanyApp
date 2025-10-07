@@ -41,7 +41,8 @@ export const ItemCardForFavorite = ({ item }: { item: ItemType }) => {
             {item.name}
           </ItemTitle>
           <ItemTitle className="text-xs font-medium pl-2 pt-2">
-            Остаток на складе: {item.countInMeter} М / {item.countInT} т
+            Остаток на складе: {item.remnants[0].inStockM} М /{" "}
+            {item.remnants[0].inStockT} т
           </ItemTitle>
         </ItemContent>
       </div>

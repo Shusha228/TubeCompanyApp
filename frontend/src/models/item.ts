@@ -1,3 +1,9 @@
+interface Remnants {
+  idStock: string;
+  inStockT: number;
+  inStockM: number;
+}
+
 export interface Item {
   id: number;
   idCat: string;
@@ -15,7 +21,5 @@ export interface Item {
   pipeWallThickness: number;
   status: string;
   koef: number;
-
-  countInMeter?: number;
-  countInT?: number;
+  remnants: Remnants[];
 }
