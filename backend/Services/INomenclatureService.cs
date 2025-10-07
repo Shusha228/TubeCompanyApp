@@ -1,5 +1,6 @@
 using backend.Models.Entities;
 using backend.Data;
+using backend.Models.DTOs.Nomenclature;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services
@@ -18,7 +19,7 @@ namespace backend.Services
         Task<NomenclaturePaginationResponse> GetByTypePagedAsync(int typeId, int from, int to);
         Task<NomenclaturePaginationResponse> SearchPagedAsync(string searchTerm, int from, int to);
         
-        Task<Models.Nomenclature.PriceCalculationResult> CalculatePriceAsync(Models.Nomenclature.PriceCalculationRequest request);
+        Task<PriceCalculationResult> CalculatePriceAsync(PriceCalculationRequest request);
     }
 
     public class NomenclatureService : INomenclatureService
@@ -414,7 +415,7 @@ namespace backend.Services
             }
         }
         
-        public async Task<Models.Nomenclature.PriceCalculationResult> CalculatePriceAsync(Models.Nomenclature.PriceCalculationRequest request)
+        public async Task<PriceCalculationResult> CalculatePriceAsync(PriceCalculationRequest request)
         {
             try
             {
@@ -488,7 +489,7 @@ namespace backend.Services
                     convertedQuantity = request.Quantity / nomenclature.Koef;
                 }
 
-                var result = new Models.Nomenclature.PriceCalculationResult
+                var result = new PriceCalculationResult
                 {
                     NomenclatureId = request.NomenclatureId,
                     NomenclatureName = nomenclature.Name,

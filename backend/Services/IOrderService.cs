@@ -1,5 +1,5 @@
 using backend.Models.Entities;
-using backend.Models;
+using backend.Models.DTOs.Nomenclature;
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,7 +41,7 @@ namespace backend.Services
 
                 foreach (var requestItem in request.Items)
                 {
-                    var priceResponse = await _nomenclatureService.CalculatePriceAsync(new Models.Nomenclature.PriceCalculationRequest
+                    var priceResponse = await _nomenclatureService.CalculatePriceAsync(new PriceCalculationRequest
                     {
                         NomenclatureId = requestItem.ProductId,
                         StockId = requestItem.StockId,
