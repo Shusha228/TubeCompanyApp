@@ -5,6 +5,5 @@ const SAFE_BASE_URL = BASE_URL?.endsWith("/")
   : BASE_URL;
 
 export const getURL = (url: string): string => {
-  console.log(SAFE_BASE_URL + "/" + url);
   return SAFE_BASE_URL + "/" + url;
 };

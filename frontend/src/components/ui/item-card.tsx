@@ -1,8 +1,9 @@
 import { Modal } from "@/modals/models/modal";
+import type { Item as ItemType } from "@/models/item";
 import { useActiveModal } from "@/providers/active-modal";
 import { Item, ItemContent, ItemMedia, ItemTitle } from "./item";
 
-export const ItemCard = () => {
+export const ItemCard = ({ item }: { item: ItemType }) => {
   const { showModal } = useActiveModal();
   return (
     <Item
@@ -14,7 +15,7 @@ export const ItemCard = () => {
         <img src="/image.png" className="w-full h-auto" />
       </ItemMedia>
       <ItemContent className="w-full">
-        <ItemTitle className="text-md uppercase pl-2">Item</ItemTitle>
+        <ItemTitle className="text-md uppercase pl-2">{item.name}</ItemTitle>
       </ItemContent>
     </Item>
   );

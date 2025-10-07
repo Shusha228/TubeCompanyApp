@@ -1,3 +1,5 @@
+import { useFetchShoppingCart } from "@/providers/shopping-cart";
+import type { ShoppingCartItem } from "@/providers/shopping-cart/models/cart-item";
 import { EllipsisVertical, Minus, Plus } from "lucide-react";
 import { Button } from "./button";
 import { Drawer, DrawerContent, DrawerFooter, DrawerTrigger } from "./drawer";
@@ -11,7 +13,12 @@ import { Input } from "./input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "./input-group";
 import { Item, ItemContent, ItemMedia, ItemTitle } from "./item";
 
-export const ItemCardForShoppingCart = () => {
+export const ItemCardForShoppingCart = ({
+  item,
+}: {
+  item: ShoppingCartItem;
+}) => {
+  const { deleteItem } = useFetchShoppingCart();
   return (
     <Item
       variant="outline"
@@ -23,16 +30,19 @@ export const ItemCardForShoppingCart = () => {
         </ItemMedia>
         <ItemContent className="w-full justify-center">
           <ItemTitle className="text-md font-medium text-[18px] uppercase pl-2">
-            Item
+            {item.product.name}
           </ItemTitle>
           <InputGroup className="w-fit mt-2">
             <Drawer>
               <DrawerTrigger>
-                <InputGroupInput className="w-[47px] text-center" />
+                <InputGroupInput
+                  className="w-[47px] text-center"
+                  defaultValue={item.quantity}
+                />
               </DrawerTrigger>
               <DrawerContent>
                 <DrawerFooter>
-                  <Input placeholder="1200, м" />
+                  <Input placeholder="1200, м" defaultValue={item.quantity} />
                   <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98 w-full sm:w-auto cursor-pointer">
                     Сохранить изменения
                   </Button>
@@ -64,7 +74,12 @@ export const ItemCardForShoppingCart = () => {
           <EllipsisVertical size="18" color="#686868" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem variant="destructive">Удалить</DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => deleteItem(item)}
+          >
+            Удалить
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </Item>
