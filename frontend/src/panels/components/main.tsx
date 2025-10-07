@@ -15,6 +15,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { ItemCard } from "@/components/ui/item-card";
 import { Label } from "@/components/ui/label";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
@@ -24,7 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { City } from "@/models/city";
+import { FetchAllItemsProvider, useFetchAllItems } from "@/providers/all-items";
+import { FetchItemProvider } from "@/providers/item";
 import { FilterIcon, SearchIcon, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
@@ -218,6 +222,133 @@ export const MainPanel = () => {
     setAllowDeleteCity(false);
   };
 
+  const SearchBar = () => {
+    const { setFilters } = useFetchAllItems();
+    return (
+      <InputGroup>
+        <InputGroupInput
+          placeholder="Поиск"
+          onChange={(e) => setFilters({ search: e.currentTarget.value })}
+        />
+        <InputGroupAddon>
+          <SearchIcon />
+        </InputGroupAddon>
+      </InputGroup>
+    );
+  };
+
+  const CityInput = () => (
+    <InputGroup>
+      <InputGroupInput
+        placeholder="Введите город"
+        value={citySearch}
+        onChange={(e) => setCitySearch(e.currentTarget.value)}
+        ref={citySearchInput}
+      />
+      <InputGroupAddon>
+        <SearchIcon />
+      </InputGroupAddon>
+      {allowDeleteCity && (
+        <InputGroupButton onClick={() => setSearchableCityNull()}>
+          <X />
+        </InputGroupButton>
+      )}
+    </InputGroup>
+  );
+
+  const ProductTypeList = () => (
+    <ScrollArea className="w-full min-h-[200px] overflow-auto">
+      <ScrollBar orientation="horizontal" />
+      <div className="flex flex-col gap-1 h-auto w-full">
+        {checkBoxes.map((el) => (
+          <div key={el.id} className="flex flex-col gap-0">
+            <div
+              className="flex gap-1 py-2"
+              onClick={() => toggleCheckBox(el.id)}
+            >
+              <Checkbox checked={activeCheckboxes.includes(el.id)} />
+              <Label>{el.name}</Label>
+            </div>
+            {activeCheckboxes.includes(el.id) &&
+              el.sub.map((subEl) => (
+                <div
+                  key={subEl.id}
+                  className="flex gap-1 p-2"
+                  onClick={() => toggleCheckBox(subEl.id)}
+                >
+                  <Checkbox checked={activeCheckboxes.includes(subEl.id)} />
+                  <Label>{subEl.name}</Label>
+                </div>
+              ))}
+          </div>
+        ))}
+      </div>
+    </ScrollArea>
+  );
+
+  const AttributeSelects = () => (
+    <ScrollArea className="w-full">
+      <div className="flex w-full gap-2 px-2 md:pl-4 overflow-auto">
+        <Select>
+          <SelectTrigger className="w-[100px]">
+            <SelectValue placeholder="ГОСТ" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="gost-20295">ГОСТ 20295-85</SelectItem>
+            <SelectItem value="gost-10704">
+              ГОСТ 10704-91 / ГОСТ 10706-76
+            </SelectItem>
+            <SelectItem value="iso-3183">ГОСТ ISO 3183-2015</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue placeholder="Диаметр" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="d-light">Light</SelectItem>
+            <SelectItem value="d-dark">Dark</SelectItem>
+            <SelectItem value="d-system">System</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select>
+          <SelectTrigger className="w-[100px]">
+            <SelectValue placeholder="Стенка" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="w-light">Light</SelectItem>
+            <SelectItem value="w-dark">Dark</SelectItem>
+            <SelectItem value="w-system">System</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Марка стали" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="steel-light">Light</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <ScrollBar className="hidden" orientation="horizontal" />
+    </ScrollArea>
+  );
+
+  const ItemsGrid = () => {
+    const { data, isLoading } = useFetchAllItems();
+    return (
+      <div className="grid lg:grid-cols-6 md:grid-cols-4 grid-cols-2 gap-2 px-2 md:px-4 w-full">
+        <FetchItemProvider>
+          <>
+            {isLoading && <Spinner />}{" "}
+            {!isLoading &&
+              data.map((item) => <ItemCard key={item.id} item={item} />)}
+          </>
+        </FetchItemProvider>
+      </div>
+    );
+  };
+
   const setSearchableCity = (activeCity: City) => {
     citySearchInput.current?.blur();
     _setCitySearch(activeCity);
@@ -249,175 +380,80 @@ export const MainPanel = () => {
   };
 
   return (
-    <div className="flex flex-col w-full h-auto bg-[#F3F3F3]">
-      <div className="flex flex-col pt-6 gap-4 w-full bg-white rounded-b-[12px] pb-4.5">
-        <div className="flex flex-col gap-2 w-full">
-          <div className="flex w-full gap-2 px-2 md:px-4">
-            <InputGroup>
-              <InputGroupInput placeholder="Поиск" />
-              <InputGroupAddon>
-                <SearchIcon />
-              </InputGroupAddon>
-            </InputGroup>
-            <Drawer>
-              <DrawerTrigger asChild={true}>
-                <Button variant="ghost" size="icon">
-                  <FilterIcon color="#EC6608" />
-                </Button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <DrawerFooter className="min-h-[484px]">
-                  <DrawerTitle className="text-start">Склад</DrawerTitle>
-                  <div className="flex flex-col gap-2">
-                    <InputGroup>
-                      <InputGroupInput
-                        placeholder="Введите город"
-                        value={citySearch}
-                        onChange={(e) => setCitySearch(e.currentTarget.value)}
-                      />
-                      <InputGroupAddon>
-                        <SearchIcon />
-                      </InputGroupAddon>
-                      {allowDeleteCity && (
-                        <InputGroupButton
-                          onClick={() => setSearchableCityNull()}
-                        >
-                          <X />
-                        </InputGroupButton>
-                      )}
-                    </InputGroup>
-                    {findedCities.length > 0 && (
-                      <div className="flex flex-col gap-1">
-                        {findedCities.map((el, i) => (
-                          <Button
-                            variant="ghost"
-                            key={i}
-                            onClick={() => setSearchableCity(el)}
-                            className="justify-start"
-                          >
-                            {el}
-                          </Button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <DrawerTitle className="pt-2">Вид продукции</DrawerTitle>
-                  <ScrollArea className="w-full min-h-[200px] overflow-auto">
-                    <ScrollBar orientation="horizontal" />
-                    <div className="flex flex-col gap-1 h-auto w-full">
-                      {checkBoxes.map((el) => (
-                        <div key={el.id} className="flex flex-col gap-0">
-                          <div
-                            className="flex gap-1 py-2"
-                            onClick={() => toggleCheckBox(el.id)}
-                          >
-                            <Checkbox
-                              checked={activeCheckboxes.includes(el.id)}
-                            />
-                            <Label>{el.name}</Label>
-                          </div>
-                          {activeCheckboxes.includes(el.id) &&
-                            el.sub.map((subEl) => (
-                              <div
-                                key={subEl.id}
-                                className="flex gap-1 p-2"
-                                onClick={() => toggleCheckBox(subEl.id)}
-                              >
-                                <Checkbox
-                                  checked={activeCheckboxes.includes(subEl.id)}
-                                />
-                                <Label>{subEl.name}</Label>
-                              </div>
-                            ))}
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                  <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98">
-                    Сохранить
+    <FetchAllItemsProvider>
+      <div className="flex flex-col w-full h-auto bg-[#F3F3F3]">
+        <div className="flex flex-col pt-6 gap-4 w-full bg-white rounded-b-[12px] pb-4.5">
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex w-full gap-2 px-2 md:px-4">
+              <SearchBar />
+              <Drawer>
+                <DrawerTrigger asChild={true}>
+                  <Button variant="ghost" size="icon">
+                    <FilterIcon color="#EC6608" />
                   </Button>
-                  <DrawerClose>
-                    <Button
-                      asChild={true}
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-4 top-4"
-                    >
-                      <X className="w-6 h-6 opacity-50" />
+                </DrawerTrigger>
+                <DrawerContent>
+                  <DrawerFooter className="min-h-[484px]">
+                    <DrawerTitle className="text-start">Склад</DrawerTitle>
+                    <div className="flex flex-col gap-2">
+                      <CityInput />
+                      {findedCities.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                          {findedCities.map((el, i) => (
+                            <Button
+                              variant="ghost"
+                              key={i}
+                              onClick={() => setSearchableCity(el)}
+                              className="justify-start"
+                            >
+                              {el}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <DrawerTitle className="pt-2">Вид продукции</DrawerTitle>
+                    <ProductTypeList />
+                    <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98">
+                      Сохранить
                     </Button>
-                  </DrawerClose>
-                </DrawerFooter>
-              </DrawerContent>
-            </Drawer>
+                    <DrawerClose>
+                      <Button
+                        asChild={true}
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-4 top-4"
+                      >
+                        <X className="w-6 h-6 opacity-50" />
+                      </Button>
+                    </DrawerClose>
+                  </DrawerFooter>
+                </DrawerContent>
+              </Drawer>
+            </div>
+            <ScrollArea className="w-auto">
+              <div className="flex gap-2 px-2 md:pl-4 w-max">
+                {categories.map((el) => (
+                  <Badge
+                    onClick={() => setCategory(el.IDType)}
+                    key={el.IDType}
+                    className="cursor-pointer"
+                    variant={category == el.IDType ? "default" : "outline"}
+                  >
+                    {el.Type}
+                  </Badge>
+                ))}
+              </div>
+              <ScrollBar className="hidden" orientation="horizontal" />
+            </ScrollArea>
           </div>
-          <ScrollArea className="w-auto">
-            <div className="flex gap-2 px-2 md:pl-4 w-max">
-              {categories.map((el) => (
-                <Badge
-                  onClick={() => setCategory(el.IDType)}
-                  key={el.IDType}
-                  className="cursor-pointer"
-                  variant={category == el.IDType ? "default" : "outline"}
-                >
-                  {el.Type}
-                </Badge>
-              ))}
-            </div>
-            <ScrollBar className="hidden" orientation="horizontal" />
-          </ScrollArea>
+          {category && <AttributeSelects />}
         </div>
-        {category && (
-          <ScrollArea className="w-full">
-            <div className="flex w-full gap-2 px-2 md:pl-4 overflow-auto">
-              <Select>
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue placeholder="ГОСТ" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">ГОСТ 20295-85</SelectItem>
-                  <SelectItem value="dark">
-                    ГОСТ 10704-91 / ГОСТ 10706-76
-                  </SelectItem>
-                  <SelectItem value="system">ГОСТ ISO 3183-2015</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Диаметр" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select>
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue placeholder="Стенка" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Марка стали" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <ScrollBar className="hidden" orientation="horizontal" />
-          </ScrollArea>
-        )}
+        <div className="w-full h-[10px]"></div>
+        <div className="pb-18 bg-white rounded-t-[12px] w-full pt-2.5 md:pt-4.5">
+          <ItemsGrid />
+        </div>
       </div>
-      <div className="w-full h-[10px]"></div>
-      <div className="pb-18 bg-white rounded-t-[12px] w-full pt-2.5 md:pt-4.5">
-        <div className="grid lg:grid-cols-6 md:grid-cols-4 grid-cols-2 gap-2 px-2 md:px-4 w-full"></div>
-      </div>
-    </div>
+    </FetchAllItemsProvider>
   );
 };

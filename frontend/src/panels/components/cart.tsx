@@ -31,7 +31,12 @@ export const ShoppingCartList = () => {
           <Spinner />
         </div>
       )}
-      {!isLoading && hasNext && <div ref={observableElement}></div>}
+      {data.length == 0 && (
+        <div className="w-full text-center">Здесь пока пусто!</div>
+      )}
+      {data.length >= 20 && !isLoading && hasNext && (
+        <div ref={observableElement}></div>
+      )}
     </>
   );
 };
