@@ -57,6 +57,7 @@ namespace backend.Controllers
         [SwaggerOperation(Summary = "Добавить товар в корзину", Description = "Добавляет новый товар в корзину пользователя или обновляет количество существующего")]
         [SwaggerResponse(200, "Товар добавлен в корзину", typeof(CartItem))]
         [SwaggerResponse(400, "Неверные данные запроса")]
+        [SwaggerResponse(404, "Товар или склад не найдены")]
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult<CartItem>> AddToCart(
             [SwaggerParameter("ID пользователя", Required = true)] int userId,
@@ -72,7 +73,8 @@ namespace backend.Controllers
 
                 var cartItem = await _cartService.AddToCartAsync(
                     userId, 
-                    request.ProductId, 
+                    request.StockId,
+                    request.ProductId,
                     request.ProductName, 
                     request.Quantity, 
                     request.IsInMeters, 
@@ -81,6 +83,11 @@ namespace backend.Controllers
                 );
 
                 return Ok(cartItem);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"Validation error adding to cart for user {userId}");
+                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
@@ -93,20 +100,22 @@ namespace backend.Controllers
         /// Удалить товар из корзины
         /// </summary>
         /// <param name="userId">ID пользователя</param>
+        /// <param name="stockId">ID склада</param>
         /// <param name="productId">ID товара</param>
         /// <returns>Результат операции</returns>
-        [HttpDelete("{userId}/items/{productId}")]
+        [HttpDelete("{userId}/items/{stockId}/{productId}")]
         [SwaggerOperation(Summary = "Удалить товар из корзины", Description = "Удаляет конкретный товар из корзины пользователя")]
         [SwaggerResponse(204, "Товар удален из корзины")]
         [SwaggerResponse(404, "Товар не найден в корзине")]
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult> RemoveFromCart(
             [SwaggerParameter("ID пользователя", Required = true)] int userId,
+            [SwaggerParameter("ID склада", Required = true)] string stockId,
             [SwaggerParameter("ID товара", Required = true)] int productId)
         {
             try
             {
-                var result = await _cartService.RemoveFromCartAsync(userId, productId);
+                var result = await _cartService.RemoveFromCartAsync(userId, stockId, productId);
                 
                 if (!result)
                 {
@@ -117,7 +126,7 @@ namespace backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error removing from cart for user {userId}, product {productId}");
+                _logger.LogError(ex, $"Error removing from cart for user {userId}, stock {stockId}, product {productId}");
                 return StatusCode(500, "Ошибка при удалении товара из корзины");
             }
         }
@@ -150,10 +159,11 @@ namespace backend.Controllers
         /// Обновить количество товара в корзине
         /// </summary>
         /// <param name="userId">ID пользователя</param>
+        /// <param name="stockId">ID склада</param>
         /// <param name="productId">ID товара</param>
         /// <param name="request">Новое количество товара</param>
         /// <returns>Обновленный товар в корзине</returns>
-        [HttpPut("{userId}/items/{productId}")]
+        [HttpPut("{userId}/items/{stockId}/{productId}")]
         [SwaggerOperation(Summary = "Обновить количество товара", Description = "Изменяет количество конкретного товара в корзине пользователя")]
         [SwaggerResponse(200, "Количество обновлено", typeof(CartItem))]
         [SwaggerResponse(400, "Неверное количество")]
@@ -161,6 +171,7 @@ namespace backend.Controllers
         [SwaggerResponse(500, "Ошибка сервера")]
         public async Task<ActionResult<CartItem>> UpdateQuantity(
             [SwaggerParameter("ID пользователя", Required = true)] int userId,
+            [SwaggerParameter("ID склада", Required = true)] string stockId,
             [SwaggerParameter("ID товара", Required = true)] int productId,
             [SwaggerParameter("Новое количество товара", Required = true)]
             [FromBody] UpdateQuantityRequest request)
@@ -172,7 +183,7 @@ namespace backend.Controllers
                     return BadRequest("Количество должно быть больше 0");
                 }
 
-                var cartItem = await _cartService.UpdateCartItemQuantityAsync(userId, productId, request.NewQuantity);
+                var cartItem = await _cartService.UpdateCartItemQuantityAsync(userId, stockId, productId, request.NewQuantity);
                 
                 if (cartItem == null)
                 {
@@ -183,7 +194,7 @@ namespace backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error updating quantity for user {userId}, product {productId}");
+                _logger.LogError(ex, $"Error updating quantity for user {userId}, stock {stockId}, product {productId}");
                 return StatusCode(500, "Ошибка при обновлении количества товара");
             }
         }
@@ -242,6 +253,11 @@ namespace backend.Controllers
     /// </summary>
     public class AddToCartRequest
     {
+        /// <summary>
+        /// ID склада
+        /// </summary>
+        public string StockId { get; set; } = string.Empty;
+        
         /// <summary>
         /// ID товара
         /// </summary>

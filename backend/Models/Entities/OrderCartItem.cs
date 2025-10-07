@@ -12,6 +12,6 @@ namespace backend.Models.Entities
         public decimal Quantity { get; set; }
         public bool IsInMeters { get; set; } = true;
         public decimal FinalPrice { get; set; }
-        public decimal UnitPrice { get; set; }
+        public decimal UnitPrice { get; set; } 
     }
 }
