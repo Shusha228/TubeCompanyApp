@@ -10,6 +10,7 @@ import { useActivePanel } from "./providers/active-panel";
 function App() {
   const { activePanel, setActivePanel, _activeObject } = useActivePanel();
   const { activeModal, closeModal } = useActiveModal();
+
   return (
     <>
       {activePanel()}

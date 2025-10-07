@@ -4,7 +4,33 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { ItemCardForShoppingCart } from "@/components/ui/item-card-cart";
+import { Spinner } from "@/components/ui/spinner";
+import { useObservable } from "@/hooks/observer";
+import {
+  FetchShoppingCartProvider,
+  useFetchShoppingCart,
+} from "@/providers/shopping-cart";
 import { SearchIcon } from "lucide-react";
+import { useRef } from "react";
+
+export const ShoppingCartList = () => {
+  const { data, isLoading, next, hasNext } = useFetchShoppingCart();
+  const observableElement = useRef<HTMLDivElement>(null);
+
+  useObservable({
+    ref: observableElement,
+    onIntersect: next,
+  });
+  return (
+    <>
+      {data.map((el) => (
+        <ItemCardForShoppingCart key={el.productId} />
+      ))}
+      {isLoading && <Spinner />}
+      {!isLoading && hasNext && <div ref={observableElement}></div>}
+    </>
+  );
+};
 
 export const CartPanel = () => {
   return (
@@ -23,9 +49,9 @@ export const CartPanel = () => {
       <div className="w-full h-[10px]"></div>
       <div className="pb-18 bg-white rounded-t-[12px] w-full pt-2.5 md:pt-4.5">
         <div className="grid grid-cols-1 gap-2 px-2 md:px-4">
-          {[...Array(24).keys()].map((el) => (
-            <ItemCardForShoppingCart key={el} />
-          ))}
+          <FetchShoppingCartProvider>
+            <ShoppingCartList />
+          </FetchShoppingCartProvider>
         </div>
       </div>
     </div>
