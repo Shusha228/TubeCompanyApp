@@ -3,9 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace backend.Models.Nomenclature
 {
-    /// <summary>
+    
     /// Результат расчета стоимости
-    /// </summary>
     public class PriceCalculationResult
     {
         [Description("ID номенклатуры")]

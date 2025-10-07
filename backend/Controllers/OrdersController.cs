@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using backend.Models;
+using backend.Models.DTOs.Order;
 using backend.Services;
 using backend.Models.Entities;
 
@@ -19,7 +19,7 @@ namespace backend.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Order>> CreateOrder([FromBody] Models.Order.CreateOrderRequest request)
+        public async Task<ActionResult<Order>> CreateOrder([FromBody] CreateOrderRequest request)
         {
             try
             {

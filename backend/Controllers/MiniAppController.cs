@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using backend.Models.DTOs.MiniApp;
 
 namespace backend.Controllers
 {
@@ -126,12 +127,5 @@ namespace backend.Controllers
         }
     }
 
-    public class TelegramValidationResult
-    {
-        public bool IsValid { get; set; }
-        public string Error { get; set; } = string.Empty;
-        public string UserId { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-    }
+
 }
