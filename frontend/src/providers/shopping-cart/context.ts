@@ -8,6 +8,7 @@ export interface FetchShoppingCart {
   next: () => void;
   hasNext: boolean;
   data: ShoppingCartItem[];
+  deleteItem: (item: ShoppingCartItem) => void;
 }
 
 export const FetchShoppingCartContext = createContext({} as FetchShoppingCart);

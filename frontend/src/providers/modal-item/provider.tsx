@@ -13,7 +13,7 @@ export const ModalItemProvider = ({ children }: { children: JSX.Element }) => {
     fetch(getURL(`Nomenclature/${id}`))
       .then((el) => el.json())
       .then((data) => {
-        setData(data);
+        setData(data["data"]);
       })
       .finally(() => setLoading(false));
   };

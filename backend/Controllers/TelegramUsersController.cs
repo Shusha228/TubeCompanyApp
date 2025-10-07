@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.Models.Entities;
 using backend.Services;
-using backend.Models.Telegram;
+using backend.Models.DTOs.Telegram;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace backend.Controllers
 {
-    /// <summary>
+    
     /// API для управления пользователями Telegram
-    /// </summary>
+    
     [ApiController]
     [Route("api/[controller]")]
     [SwaggerTag("Управление пользователями Telegram - создание, чтение, обновление и удаление пользователей")]
@@ -24,10 +24,6 @@ namespace backend.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Получить всех пользователей
-        /// </summary>
-        /// <returns>Список всех пользователей</returns>
         [HttpGet]
         [SwaggerOperation(Summary = "Получить всех пользователей",
             Description = "Возвращает полный список всех зарегистрированных пользователей Telegram")]
@@ -51,11 +47,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Получить пользователя по ID Telegram
-        /// </summary>
-        /// <param name="telegramUserId">ID пользователя в Telegram</param>
-        /// <returns>Пользователь</returns>
         [HttpGet("{telegramUserId}")]
         [SwaggerOperation(Summary = "Получить пользователя по ID",
             Description = "Возвращает пользователя по его идентификатору в Telegram")]
@@ -83,11 +74,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Создать нового пользователя
-        /// </summary>
-        /// <param name="request">Данные для создания пользователя</param>
-        /// <returns>Созданный пользователь</returns>
         [HttpPost]
         [SwaggerOperation(Summary = "Создать нового пользователя",
             Description = "Создаёт новую запись пользователя Telegram")]
@@ -126,12 +112,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Обновить пользователя
-        /// </summary>
-        /// <param name="telegramUserId">ID пользователя для обновления</param>
-        /// <param name="request">Новые данные пользователя</param>
-        /// <returns>Обновленный пользователь</returns>
         [HttpPut("{telegramUserId}")]
         [SwaggerOperation(Summary = "Обновить пользователя",
             Description = "Обновляет данные существующего пользователя Telegram")]
@@ -177,11 +157,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Удалить пользователя
-        /// </summary>
-        /// <param name="telegramUserId">ID пользователя для удаления</param>
-        /// <returns>Результат операции</returns>
         [HttpDelete("{telegramUserId}")]
         [SwaggerOperation(Summary = "Удалить пользователя", Description = "Удаляет пользователя из системы")]
         [SwaggerResponse(200, "Пользователь удален")]
@@ -212,11 +187,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Получить пользователя по ИНН
-        /// </summary>
-        /// <param name="inn">ИНН пользователя</param>
-        /// <returns>Пользователь</returns>
         [HttpGet("inn/{inn}")]
         [SwaggerOperation(Summary = "Получить пользователя по ИНН", Description = "Возвращает пользователя по его ИНН")]
         [SwaggerResponse(200, "Пользователь найден", typeof(TelegramUser))]
@@ -243,11 +213,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Поиск пользователей
-        /// </summary>
-        /// <param name="term">Поисковый запрос</param>
-        /// <returns>Найденные пользователи</returns>
         [HttpGet("search")]
         [SwaggerOperation(Summary = "Поиск пользователей",
             Description = "Выполняет поиск пользователей по имени, фамилии, ИНН, email или телефону")]
@@ -274,10 +239,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Тестовый endpoint
-        /// </summary>
-        /// <returns>Статус работы API</returns>
         [HttpGet("test")]
         [SwaggerOperation(Summary = "Тест API",
             Description = "Проверка работоспособности контроллера пользователей Telegram")]

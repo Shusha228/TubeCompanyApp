@@ -41,13 +41,13 @@ function App() {
       <div className="fixed bottom-0 w-full px-4 flex py-3 pb-5.5 bg-[#fffffff6] backdrop-blur-md border-t-1 border-[#0000000d] rounded-t-2xl">
         <div
           onClick={() => setActivePanel(Panel.Main)}
-          className="w-full py-2 flex justify-center"
+          className="w-full py-2 flex justify-center items-center"
         >
           <Home color={_activeObject == Panel.Main ? "#EC6608" : "#AAAAAA"} />
         </div>
         <div
           onClick={() => setActivePanel(Panel.Favorites)}
-          className="w-full py-2 flex justify-center"
+          className="w-full py-2 flex justify-center items-center"
         >
           <Book
             color={_activeObject == Panel.Favorites ? "#EC6608" : "#AAAAAA"}
@@ -55,7 +55,7 @@ function App() {
         </div>
         <div
           onClick={() => setActivePanel(Panel.Cart)}
-          className="w-full py-2 flex justify-center"
+          className="w-full py-2 flex justify-center items-center"
         >
           <ShoppingCartIcon
             color={_activeObject == Panel.Cart ? "#EC6608" : "#AAAAAA"}
@@ -63,7 +63,7 @@ function App() {
         </div>
         <div
           onClick={() => setActivePanel(Panel.Profile)}
-          className="w-full py-2 flex justify-center"
+          className="w-full py-2 flex justify-center items-center"
         >
           <Avatar>
             <AvatarImage src={user.photo} />

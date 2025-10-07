@@ -30,24 +30,34 @@ export const FetchFavoritesProvider = ({
           }
         })
       );
+    } else {
+      setVisibleData(_data);
     }
   };
 
   const toggleFavorite = (item: Item) => {
     if (hasInFavorite(item.id)) {
-      _setData((el) => el.filter((i) => i.id !== item.id));
+      _setData((el) => {
+        const data = el.filter((i) => i.id !== item.id);
+        setVisibleData(data);
+        localStorage.setItem("favorites", JSON.stringify(data));
+        return data;
+      });
     } else {
-      _setData((el) => [item, ...el]);
+      _setData((el) => {
+        const data = [item, ...el];
+        setVisibleData(data);
+        localStorage.setItem("favorites", JSON.stringify(data));
+        return data;
+      });
     }
-    setVisibleData(_data);
-    localStorage.setItem("favorites", JSON.stringify(_data));
   };
 
   useEffect(() => {
     const favoritesPersiste = localStorage.getItem("favorites");
     if (favoritesPersiste !== null) {
       _setData(JSON.parse(favoritesPersiste));
-      setVisibleData(_data);
+      setVisibleData(JSON.parse(favoritesPersiste));
     }
   }, []);
 

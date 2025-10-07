@@ -1,3 +1,8 @@
+import { Modal } from "@/modals/models/modal";
+import type { Item as ItemType } from "@/models/item";
+import { useActiveModal } from "@/providers/active-modal";
+import { useFetchFavorites } from "@/providers/favorites";
+import { useModalItem } from "@/providers/modal-item";
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "./button";
 import {
@@ -8,22 +13,35 @@ import {
 } from "./dropdown-menu";
 import { Item, ItemContent, ItemMedia, ItemTitle } from "./item";
 
-export const ItemCardForFavorite = () => {
+export const ItemCardForFavorite = ({ item }: { item: ItemType }) => {
+  const { toggleFavorite } = useFetchFavorites();
+  const activeModal = useActiveModal();
+  const modalItem = useModalItem();
+
+  const showModal = () => {
+    modalItem.showModal(item.id);
+    activeModal.showModal(Modal.Item);
+  };
+
   return (
     <Item
       variant="outline"
       className="relative p-0 w-full gap-2 pb-2 border-0 bg-none sm:flex-row flex-col sm:justify-between"
     >
       <div className="w-full sm:w-auto h-auto flex gap-2">
-        <ItemMedia variant="image" className="w-[96px] h-auto">
+        <ItemMedia
+          variant="image"
+          className="w-[96px] h-auto"
+          onClick={showModal}
+        >
           <img src="/image.png" className="w-full h-auto" />
         </ItemMedia>
         <ItemContent className="w-full justify-center">
-          <ItemTitle className="text-md font-medium text-[18px] uppercase pl-2">
-            Item
+          <ItemTitle className="w-full font-medium text-[14px] max-w-[400px] uppercase px-2 text-ellipsis wrap-break-word">
+            {item.name}
           </ItemTitle>
           <ItemTitle className="text-xs font-medium pl-2 pt-2">
-            Остаток на складе: 1200 М / 63.3 т
+            Остаток на складе: {item.countInMeter} М / {item.countInT} т
           </ItemTitle>
         </ItemContent>
       </div>
@@ -39,7 +57,12 @@ export const ItemCardForFavorite = () => {
           <EllipsisVertical size="18" color="#686868" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem variant="destructive">Удалить</DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => toggleFavorite(item)}
+          >
+            Удалить
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </Item>
