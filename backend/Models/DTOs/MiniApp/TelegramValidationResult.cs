@@ -1,11 +1,19 @@
-namespace backend.Models.DTOs.MiniApp
+using System.ComponentModel;
+
+public class TelegramValidationResult
 {
-    public class TelegramValidationResult
-    {
-        public bool IsValid { get; set; }
-        public string Error { get; set; } = string.Empty;
-        public string UserId { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-    }
+    [Description("Результат валидации (true - успешно, false - ошибка)")]
+    public bool IsValid { get; set; }
+
+    [Description("Сообщение об ошибке (если есть)")]
+    public string Error { get; set; } = string.Empty;
+
+    [Description("Идентификатор пользователя Telegram")]
+    public string UserId { get; set; } = string.Empty;
+
+    [Description("Имя пользователя Telegram")]
+    public string FirstName { get; set; } = string.Empty;
+
+    [Description("Фамилия пользователя Telegram")]
+    public string LastName { get; set; } = string.Empty;
 }
