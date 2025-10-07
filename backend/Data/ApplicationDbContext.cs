@@ -267,7 +267,7 @@ namespace backend.Data
             // CartItem (отдельная сущность для активной корзины)
             modelBuilder.Entity<CartItem>(entity =>
             {
-                entity.HasKey(e => new { e.UserId, e.ProductId });
+                entity.HasKey(e => new { e.UserId, e.ProductId, e.StockId, e.IsInMeters });
                 
                 entity.Property(e => e.UserId)
                     .IsRequired();
