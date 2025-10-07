@@ -5,6 +5,13 @@ import WebApp from "@twa-dev/sdk";
 import { useEffect, useState, type JSX } from "react";
 import { UserContext } from "./context";
 
+const _ADMIN_ARRAY_IN_STRING: string | undefined = import.meta.env.VITE_ADMINS;
+const ADMIN_ARRAY =
+  _ADMIN_ARRAY_IN_STRING !== undefined
+    ? _ADMIN_ARRAY_IN_STRING.split(", ").map((el) => Number(el))
+    : [];
+
+console.log(ADMIN_ARRAY);
 export const UserProvider = ({ children }: { children: JSX.Element }) => {
   const _user = WebApp.initDataUnsafe.user;
   const [user, setUser] = useState<User>({
@@ -12,7 +19,7 @@ export const UserProvider = ({ children }: { children: JSX.Element }) => {
     name: [_user?.first_name, _user?.last_name]
       .filter((el) => el !== undefined)
       .join(" "),
-    role: UserRole.User,
+    role: UserRole.Admin,
     photo: _user?.photo_url,
   });
 
