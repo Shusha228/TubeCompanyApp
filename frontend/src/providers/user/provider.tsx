@@ -7,7 +7,7 @@ import { UserContext } from "./context";
 
 export const UserProvider = ({ children }: { children: JSX.Element }) => {
   const _user = WebApp.initDataUnsafe.user;
-  const [user] = useState<User>({
+  const [user, setUser] = useState<User>({
     telegramId: _user !== undefined ? _user.id : 2000,
     name: [_user?.first_name, _user?.last_name]
       .filter((el) => el !== undefined)
@@ -32,6 +32,13 @@ export const UserProvider = ({ children }: { children: JSX.Element }) => {
               username: _user?.username,
             }),
           });
+        } else {
+          if (el.json()["result"] === undefined) return;
+          const data = el.json()["result"]["data"];
+          setUser((u) => ({
+            ...u,
+            inn: data !== undefined ? data["inn"] : "",
+          }));
         }
       });
     }
