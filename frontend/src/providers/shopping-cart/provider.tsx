@@ -22,15 +22,6 @@ export const FetchShoppingCartProvider = ({
   const [currentFrom, setCurrentFrom] = useState(0);
   const [isLoading, setLoading] = useState(true);
 
-  const _fetchWithWrite = (from: number, to: number) => {
-    getFavorites(telegramId, from, to)
-      .then((el) => el.json())
-      .catch(console.log)
-      .then((data: ShoppingCartPaginatedResponse) => {
-        setData(data.items);
-        setLoading(false);
-      });
-  };
   const next = () => {
     setCurrentFrom((el) => (el += 20));
     setCurrentTo((el) => {
@@ -40,21 +31,26 @@ export const FetchShoppingCartProvider = ({
         return (el += 20);
       }
     });
-    setLoading(true);
-    _fetchWithWrite(currentFrom, currentTo);
   };
 
   const setFilters = () => {};
 
   useEffect(() => {
-    fetch("/")
-      .then((el) => el.json())
+    setLoading(true);
+    getFavorites(telegramId, currentFrom, currentTo)
+      .then((response) => response.json())
       .then((data: ShoppingCartPaginatedResponse) => {
-        setData(data.items);
-        setCount(data.meta.totalCount);
-        setLoading(false);
+        if (data.items !== undefined) {
+          setData((el) => {
+            if (data !== undefined) return [...el, ...data.items];
+            return el;
+          });
+
+          setCount((el) => (el += data.items.length));
+          setLoading(false);
+        }
       });
-  }, []);
+  }, [currentFrom, currentTo, telegramId]);
 
   return (
     <FetchShoppingCartContext.Provider

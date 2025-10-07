@@ -19,7 +19,7 @@ export const ShoppingCartList = () => {
 
   useObservable({
     ref: observableElement,
-    onIntersect: next,
+    onIntersect: () => next(),
   });
   return (
     <>
