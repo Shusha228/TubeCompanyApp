@@ -23,10 +23,14 @@ export const ShoppingCartList = () => {
   });
   return (
     <>
-      {data.map((el) => (
-        <ItemCardForShoppingCart key={el.productId} />
+      {data.map((item) => (
+        <ItemCardForShoppingCart item={item} key={item.productId} />
       ))}
-      {isLoading && <Spinner />}
+      {isLoading && (
+        <div className="w-full flex justify-center">
+          <Spinner />
+        </div>
+      )}
       {!isLoading && hasNext && <div ref={observableElement}></div>}
     </>
   );

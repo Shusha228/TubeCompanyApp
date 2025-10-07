@@ -5,4 +5,5 @@ export interface User {
   telegramId: number;
   name: string;
   role: UserRole;
+  inn?: string;
 }

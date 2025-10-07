@@ -15,7 +15,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { ItemCard } from "@/components/ui/item-card";
 import { Label } from "@/components/ui/label";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
@@ -367,59 +366,57 @@ export const MainPanel = () => {
             <ScrollBar className="hidden" orientation="horizontal" />
           </ScrollArea>
         </div>
-        <ScrollArea className="w-full">
-          <div className="flex w-full gap-2 px-2 md:pl-4 overflow-auto">
-            <Select>
-              <SelectTrigger className="w-[100px]">
-                <SelectValue placeholder="ГОСТ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">ГОСТ 20295-85</SelectItem>
-                <SelectItem value="dark">
-                  ГОСТ 10704-91 / ГОСТ 10706-76
-                </SelectItem>
-                <SelectItem value="system">ГОСТ ISO 3183-2015</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Диаметр" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-[100px]">
-                <SelectValue placeholder="Стенка" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Марка стали" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <ScrollBar className="hidden" orientation="horizontal" />
-        </ScrollArea>
+        {category && (
+          <ScrollArea className="w-full">
+            <div className="flex w-full gap-2 px-2 md:pl-4 overflow-auto">
+              <Select>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="ГОСТ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">ГОСТ 20295-85</SelectItem>
+                  <SelectItem value="dark">
+                    ГОСТ 10704-91 / ГОСТ 10706-76
+                  </SelectItem>
+                  <SelectItem value="system">ГОСТ ISO 3183-2015</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Диаметр" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="Стенка" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Марка стали" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <ScrollBar className="hidden" orientation="horizontal" />
+          </ScrollArea>
+        )}
       </div>
       <div className="w-full h-[10px]"></div>
       <div className="pb-18 bg-white rounded-t-[12px] w-full pt-2.5 md:pt-4.5">
-        <div className="grid lg:grid-cols-6 md:grid-cols-4 grid-cols-2 gap-2 px-2 md:px-4 w-full">
-          {[...Array(24).keys()].map((el) => (
-            <ItemCard key={el} />
-          ))}
-        </div>
+        <div className="grid lg:grid-cols-6 md:grid-cols-4 grid-cols-2 gap-2 px-2 md:px-4 w-full"></div>
       </div>
     </div>
   );
