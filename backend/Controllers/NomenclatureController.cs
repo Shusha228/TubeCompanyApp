@@ -6,9 +6,9 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace backend.Controllers
 {
-    /// <summary>
+    
     /// API для управления номенклатурой трубной продукции
-    /// </summary>
+    
     [ApiController]
     [Route("api/[controller]")]
     [SwaggerTag("Управление справочником трубной продукции - создание, чтение, обновление и удаление позиций")]
@@ -23,10 +23,7 @@ namespace backend.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Получить весь список номенклатуры
-        /// </summary>
-        /// <returns>Список всех позиций номенклатуры</returns>
+
         [HttpGet]
         [SwaggerOperation(Summary = "Получить весь список номенклатуры", Description = "Возвращает полный список всех позиций трубной продукции")]
         [SwaggerResponse(200, "Успешный запрос", typeof(List<Nomenclature>))]
@@ -48,11 +45,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Получить позицию номенклатуры по ID
-        /// </summary>
-        /// <param name="id">ID позиции номенклатуры</param>
-        /// <returns>Позиция номенклатуры</returns>
         [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Получить позицию по ID", Description = "Возвращает конкретную позицию номенклатуры по её идентификатору")]
         [SwaggerResponse(200, "Позиция найдена", typeof(Nomenclature))]
@@ -78,11 +70,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Создать новую позицию номенклатуры
-        /// </summary>
-        /// <param name="request">Данные для создания позиции</param>
-        /// <returns>Созданная позиция номенклатуры</returns>
         [HttpPost]
         [SwaggerOperation(Summary = "Создать новую позицию", Description = "Создаёт новую запись в справочнике номенклатуры")]
         [SwaggerResponse(201, "Позиция создана", typeof(Nomenclature))]
@@ -128,12 +115,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Обновить позицию номенклатуры
-        /// </summary>
-        /// <param name="id">ID позиции для обновления</param>
-        /// <param name="request">Новые данные позиции</param>
-        /// <returns>Обновленная позиция номенклатуры</returns>
         [HttpPut("{id}")]
         [SwaggerOperation(Summary = "Обновить позицию", Description = "Обновляет данные существующей позиции номенклатуры")]
         [SwaggerResponse(200, "Позиция обновлена", typeof(Nomenclature))]
@@ -184,11 +165,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Удалить позицию номенклатуры
-        /// </summary>
-        /// <param name="id">ID позиции для удаления</param>
-        /// <returns>Результат операции</returns>
         [HttpDelete("{id}")]
         [SwaggerOperation(Summary = "Удалить позицию", Description = "Удаляет позицию из справочника номенклатуры")]
         [SwaggerResponse(200, "Позиция удалена")]
@@ -217,11 +193,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Получить номенклатуру по типу продукции
-        /// </summary>
-        /// <param name="typeId">ID типа продукции</param>
-        /// <returns>Список позиций указанного типа</returns>
         [HttpGet("type/{typeId}")]
         [SwaggerOperation(Summary = "Получить по типу продукции", Description = "Возвращает список позиций номенклатуры по указанному типу продукции")]
         [SwaggerResponse(200, "Список позиций по типу", typeof(List<Nomenclature>))]
@@ -244,11 +215,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Поиск по номенклатуре
-        /// </summary>
-        /// <param name="term">Поисковый запрос</param>
-        /// <returns>Найденные позиции</returns>
         [HttpGet("search")]
         [SwaggerOperation(Summary = "Поиск по номенклатуре", Description = "Выполняет поиск позиций по названию, ГОСТу, марке стали или производителю")]
         [SwaggerResponse(200, "Результаты поиска", typeof(List<Nomenclature>))]
@@ -273,10 +239,6 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Тестовый endpoint
-        /// </summary>
-        /// <returns>Статус работы API</returns>
         [HttpGet("test")]
         [SwaggerOperation(Summary = "Тест API", Description = "Проверка работоспособности контроллера номенклатуры")]
         [SwaggerResponse(200, "API работает корректно")]
