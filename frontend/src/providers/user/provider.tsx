@@ -33,8 +33,9 @@ export const UserProvider = ({ children }: { children: JSX.Element }) => {
             }),
           });
         } else {
-          if (el.json()["result"] === undefined) return;
-          const data = el.json()["result"]["data"];
+          if ((el.json() as { result?: { data?: User } }).result === undefined)
+            return;
+          const data = (el.json() as { result?: { data?: User } }).result?.data;
           setUser((u) => ({
             ...u,
             inn: data !== undefined ? data["inn"] : "",
