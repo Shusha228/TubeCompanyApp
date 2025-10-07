@@ -7,8 +7,8 @@ import { UserContext } from "./context";
 
 export const UserProvider = ({ children }: { children: JSX.Element }) => {
   const _user = WebApp.initDataUnsafe.user;
-  const [user, setUser] = useState<User>({
-    telegramId: _user !== undefined ? _user.id : 1,
+  const [user] = useState<User>({
+    telegramId: _user !== undefined ? _user.id : 2000,
     name: [_user?.first_name, _user?.last_name]
       .filter((el) => el !== undefined)
       .join(" "),
@@ -18,27 +18,24 @@ export const UserProvider = ({ children }: { children: JSX.Element }) => {
 
   useEffect(() => {
     if (user !== undefined) {
-      fetch(getURL(`TelegramUsers/${user.telegramId}`))
-        .then((el) => el.json())
-        .then((res: User) => {
-          setUser((e) => ({
-            ...e,
-            inn: res.inn,
-          }));
-        })
-        .catch(() => {
+      fetch(getURL(`TelegramUsers/${user.telegramId}`)).then((el) => {
+        if (el.status !== 200) {
           fetch(getURL(`TelegramUsers/`), {
             method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
             body: JSON.stringify({
-              telegramUserId: _user?.id,
+              telegramUserId: user?.telegramId,
               firstName: _user?.first_name,
               lastName: _user?.last_name,
               username: _user?.username,
             }),
           });
-        });
+        }
+      });
     }
-  }, [user, _user]);
+  }, [_user]);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };

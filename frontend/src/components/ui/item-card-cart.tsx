@@ -1,3 +1,4 @@
+import { useFetchShoppingCart } from "@/providers/shopping-cart";
 import type { ShoppingCartItem } from "@/providers/shopping-cart/models/cart-item";
 import { EllipsisVertical, Minus, Plus } from "lucide-react";
 import { Button } from "./button";
@@ -17,6 +18,7 @@ export const ItemCardForShoppingCart = ({
 }: {
   item: ShoppingCartItem;
 }) => {
+  const { deleteItem } = useFetchShoppingCart();
   return (
     <Item
       variant="outline"
@@ -72,7 +74,12 @@ export const ItemCardForShoppingCart = ({
           <EllipsisVertical size="18" color="#686868" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem variant="destructive">Удалить</DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => deleteItem(item)}
+          >
+            Удалить
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </Item>

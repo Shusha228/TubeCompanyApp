@@ -267,44 +267,44 @@ export const MainPanel = () => {
               </DrawerTrigger>
               <DrawerContent>
                 <DrawerFooter className="min-h-[484px]">
-                  <ScrollArea className="w-full min-h-[400px]">
-                    <ScrollBar orientation="vertical" />
-                    <DrawerTitle className="text-start">Склад</DrawerTitle>
-                    <div className="flex flex-col gap-2">
-                      <InputGroup>
-                        <InputGroupInput
-                          placeholder="Введите город"
-                          value={citySearch}
-                          onChange={(e) => setCitySearch(e.currentTarget.value)}
-                        />
-                        <InputGroupAddon>
-                          <SearchIcon />
-                        </InputGroupAddon>
-                        {allowDeleteCity && (
-                          <InputGroupButton
-                            onClick={() => setSearchableCityNull()}
-                          >
-                            <X />
-                          </InputGroupButton>
-                        )}
-                      </InputGroup>
-                      {findedCities.length > 0 && (
-                        <div className="flex flex-col gap-1">
-                          {findedCities.map((el, i) => (
-                            <Button
-                              variant="ghost"
-                              key={i}
-                              onClick={() => setSearchableCity(el)}
-                              className="justify-start"
-                            >
-                              {el}
-                            </Button>
-                          ))}
-                        </div>
+                  <DrawerTitle className="text-start">Склад</DrawerTitle>
+                  <div className="flex flex-col gap-2">
+                    <InputGroup>
+                      <InputGroupInput
+                        placeholder="Введите город"
+                        value={citySearch}
+                        onChange={(e) => setCitySearch(e.currentTarget.value)}
+                      />
+                      <InputGroupAddon>
+                        <SearchIcon />
+                      </InputGroupAddon>
+                      {allowDeleteCity && (
+                        <InputGroupButton
+                          onClick={() => setSearchableCityNull()}
+                        >
+                          <X />
+                        </InputGroupButton>
                       )}
-                    </div>
-                    <DrawerTitle className="pt-2">Вид продукции</DrawerTitle>
-                    <div className="flex flex-col gap-1">
+                    </InputGroup>
+                    {findedCities.length > 0 && (
+                      <div className="flex flex-col gap-1">
+                        {findedCities.map((el, i) => (
+                          <Button
+                            variant="ghost"
+                            key={i}
+                            onClick={() => setSearchableCity(el)}
+                            className="justify-start"
+                          >
+                            {el}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <DrawerTitle className="pt-2">Вид продукции</DrawerTitle>
+                  <ScrollArea className="w-full min-h-[200px] overflow-auto">
+                    <ScrollBar orientation="horizontal" />
+                    <div className="flex flex-col gap-1 h-auto w-full">
                       {checkBoxes.map((el) => (
                         <div key={el.id} className="flex flex-col gap-0">
                           <div
@@ -332,20 +332,20 @@ export const MainPanel = () => {
                         </div>
                       ))}
                     </div>
-                    <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98">
-                      Сохранить
-                    </Button>
-                    <DrawerClose>
-                      <Button
-                        asChild={true}
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-4 -top-2"
-                      >
-                        <X className="w-6 h-6 opacity-50" />
-                      </Button>
-                    </DrawerClose>
                   </ScrollArea>
+                  <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98">
+                    Сохранить
+                  </Button>
+                  <DrawerClose>
+                    <Button
+                      asChild={true}
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-4 top-4"
+                    >
+                      <X className="w-6 h-6 opacity-50" />
+                    </Button>
+                  </DrawerClose>
                 </DrawerFooter>
               </DrawerContent>
             </Drawer>

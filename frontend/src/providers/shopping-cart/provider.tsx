@@ -36,6 +36,16 @@ export const FetchShoppingCartProvider = ({
   const [isLoading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterSearch>({});
 
+  const deleteItem = (item: ShoppingCartItem) => {
+    setData((data) => data.filter((el) => el.productId != item.productId));
+    fetch(
+      getURL(`Cart/${telegramId}/items/${item.stockId}/${item.productId}`),
+      {
+        method: "DELETE",
+      }
+    );
+  };
+
   const next = () => {
     setCurrentFrom((el) => (el += 20));
     setCurrentTo((el) => {
@@ -68,6 +78,7 @@ export const FetchShoppingCartProvider = ({
     <FetchShoppingCartContext.Provider
       value={{
         data,
+        deleteItem,
         isLoading,
         setFilters,
         hasNext: count !== currentTo,
