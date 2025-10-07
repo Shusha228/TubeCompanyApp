@@ -8,13 +8,11 @@ namespace backend.Services
         // Основные методы обработки (теперь принимают списки объектов)
         Task<UpdateResult> ProcessPriceUpdatesAsync(List<PriceUpdate> updates);
         Task<UpdateResult> ProcessRemnantUpdatesAsync(List<RemnantUpdate> updates);
-        Task<UpdateResult> ProcessStockUpdatesAsync(List<StockUpdate> updates);
         
         // Пакетная обработка
         Task<int> ProcessAllPendingUpdatesAsync();
         Task<int> ProcessPriceUpdatesBatchAsync();
         Task<int> ProcessRemnantUpdatesBatchAsync();
-        Task<int> ProcessStockUpdatesBatchAsync();
         
         // Статус и мониторинг
         Task<UpdateStatus> GetUpdateStatusAsync();

@@ -195,15 +195,15 @@ namespace backend.Data
                 entity.Property(e => e.AvgTubeWeight)
                     .HasColumnType("decimal(10,2)");
 
-                entity.HasOne<Nomenclature>()
-                    .WithMany()
-                    .HasForeignKey(e => e.ID)
-                    .OnDelete(DeleteBehavior.Restrict);
+                // entity.HasOne<Nomenclature>()
+                //     .WithMany()
+                //     .HasForeignKey(e => e.ID)
+                //     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne<Stock>()
-                    .WithMany()
-                    .HasForeignKey(e => e.IDStock)
-                    .OnDelete(DeleteBehavior.Restrict);
+                // entity.HasOne<Stock>()
+                //     .WithMany()
+                //     .HasForeignKey(e => e.IDStock)
+                //     .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Order
