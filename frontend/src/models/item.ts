@@ -1,13 +1,21 @@
 export interface Item {
-  photo: string;
+  id: number;
+  idCat: string;
+  idType: number;
+  idTypeNew: string;
+  productionType: string;
+  idFunctionType: string;
   name: string;
-  description: string;
-  shortDescription: string;
-  gosStandart: string;
-  diameter: string;
-  wallThickness: string;
-  producer: string;
+  gost: string;
+  formOfLength: string;
+  manufacturer: string;
+  steelGrade: string;
+  diameter: number;
+  profileSize2: number;
+  pipeWallThickness: number;
+  status: string;
+  koef: number;
 
-  countInMeter: number;
-  countInT: number;
+  countInMeter?: number;
+  countInT?: number;
 }
