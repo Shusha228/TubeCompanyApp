@@ -201,7 +201,7 @@ const ifNullStringReturnUndefined = (value: string) =>
   value == "__null__" ? undefined : value;
 
 export const MainPanel = () => {
-  const [category, setCategory] = useState<string>();
+  const [category, _setCategory] = useState<string[]>([]);
   const [activeCheckboxes, setActiveCheckBoxes] = useState<string[]>([]);
   const [citySearch, _setCitySearch] = useState<string>("");
   const [, setActiveCity] = useState<City>();
@@ -223,6 +223,18 @@ export const MainPanel = () => {
 
   const setSteelGrades = (value: string) =>
     _setSteelGrades(ifNullStringReturnUndefined(value));
+
+  const setCategory = (value?: string) => {
+    _setCategory(value !== undefined ? [value] : []);
+    _setGost(undefined);
+    _setDiameter(undefined);
+    _setPipeWallThicknesses(undefined);
+    _setSteelGrades(undefined);
+  };
+
+  const saveChangesInModal = () => {
+    _setCategory(activeCheckboxes);
+  };
 
   const findedCities = useMemo(
     () =>
@@ -283,19 +295,19 @@ export const MainPanel = () => {
           <div key={el.id} className="flex flex-col gap-0">
             <div
               className="flex gap-1 py-2"
-              onClick={() => toggleCheckBox(el.id)}
+              onClick={() => toggleCheckBox(el.name)}
             >
-              <Checkbox checked={activeCheckboxes.includes(el.id)} />
+              <Checkbox checked={activeCheckboxes.includes(el.name)} />
               <Label>{el.name}</Label>
             </div>
-            {activeCheckboxes.includes(el.id) &&
+            {activeCheckboxes.includes(el.name) &&
               el.sub.map((subEl) => (
                 <div
                   key={subEl.id}
                   className="flex gap-1 p-2"
-                  onClick={() => toggleCheckBox(subEl.id)}
+                  onClick={() => toggleCheckBox(subEl.name)}
                 >
-                  <Checkbox checked={activeCheckboxes.includes(subEl.id)} />
+                  <Checkbox checked={activeCheckboxes.includes(subEl.name)} />
                   <Label>{subEl.name}</Label>
                 </div>
               ))}
@@ -309,9 +321,10 @@ export const MainPanel = () => {
     const { data, isLoading } = useFetchAllItems();
     const visibleData = useMemo(
       () =>
-        category !== undefined
+        category.length > 0
           ? data.filter(
-              (el) => category === undefined || el.productionType == category
+              (el) =>
+                category.length > 0 || category.includes(el.productionType)
             )
           : [],
       [data]
@@ -410,7 +423,7 @@ export const MainPanel = () => {
       () =>
         data.filter(
           (el) =>
-            (category === undefined || el.productionType == category) &&
+            (category.length == 0 || category.includes(el.productionType)) &&
             (gost === undefined || el.gost === gost) &&
             (pipeWallThickness === undefined ||
               el.pipeWallThickness.toString() === pipeWallThickness) &&
@@ -451,8 +464,8 @@ export const MainPanel = () => {
   const toggleCheckBox = (checkbox: string) => {
     if (activeCheckboxes.includes(checkbox)) {
       const subItems = checkBoxes
-        .find((el) => el.id == checkbox)
-        ?.sub.map((el) => el.id);
+        .find((el) => el.name == checkbox)
+        ?.sub.map((el) => el.name);
 
       setActiveCheckBoxes((checkboxes) =>
         checkboxes
@@ -499,7 +512,10 @@ export const MainPanel = () => {
                     </div>
                     <DrawerTitle className="pt-2">Вид продукции</DrawerTitle>
                     <ProductTypeList />
-                    <Button className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98">
+                    <Button
+                      className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
+                      onClick={saveChangesInModal}
+                    >
                       Сохранить
                     </Button>
                     <DrawerClose>
@@ -521,13 +537,13 @@ export const MainPanel = () => {
                 {categories.map((el) => (
                   <Badge
                     onClick={
-                      category == el.Type
+                      category.includes(el.Type)
                         ? () => setCategory(undefined)
                         : () => setCategory(el.Type)
                     }
                     key={el.IDType}
                     className="cursor-pointer"
-                    variant={category == el.Type ? "default" : "outline"}
+                    variant={category.includes(el.Type) ? "default" : "outline"}
                   >
                     {el.Type}
                   </Badge>
