@@ -1,4 +1,4 @@
-﻿﻿version: '3.8'
+﻿version: '3.8'
 
 services:
   nginx:
@@ -80,7 +80,7 @@ services:
       - tubecompany-network
     restart: unless-stopped
     expose:
-      - "3000"  # Делаем порт доступным только внутри сети
+      - "3000"
 
 networks:
   tubecompany-network:
