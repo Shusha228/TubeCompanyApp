@@ -15,7 +15,7 @@ console.log(ADMIN_ARRAY);
 export const UserProvider = ({ children }: { children: JSX.Element }) => {
   const _user = WebApp.initDataUnsafe.user;
   const [user, setUser] = useState<User>({
-    telegramId: _user !== undefined ? _user.id : 0,
+    telegramId: _user !== undefined ? _user.id : 1,
     name: [_user?.first_name, _user?.last_name]
       .filter((el) => el !== undefined)
       .join(" "),
