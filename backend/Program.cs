@@ -91,11 +91,18 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Применяем миграции
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.Migrate();  // ← ЭТО РАБОТАЕТ БЕЗ dotnet ef
+    
+    // Принудительно создаем базу, если не существует
+    await dbContext.Database.EnsureCreatedAsync();
+    
+    // Затем применяем миграции
+    if (dbContext.Database.GetPendingMigrations().Any())
+    {
+        await dbContext.Database.MigrateAsync();
+    }
 }
 
 
