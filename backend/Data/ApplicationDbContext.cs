@@ -17,6 +17,7 @@ namespace backend.Data
         // Новые DbSet для корзины и информации о клиентах
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<CustomerInfo> CustomerInfos { get; set; }
+        public DbSet<TelegramUser> TelegramUsers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -372,6 +373,22 @@ namespace backend.Data
             modelBuilder.Entity<Order>()
                 .HasIndex(e => e.CreatedAt)
                 .HasDatabaseName("IX_Order_CreatedAt");
+            
+            modelBuilder.Entity<TelegramUser>(entity =>
+            {
+                entity.HasKey(e => e.TelegramUserId);
+                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Inn).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Phone).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Username).HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(20);
+                
+                entity.HasIndex(e => e.Inn).HasDatabaseName("IX_TelegramUser_Inn");
+                entity.HasIndex(e => e.Email).HasDatabaseName("IX_TelegramUser_Email");
+                entity.HasIndex(e => e.Phone).HasDatabaseName("IX_TelegramUser_Phone");
+            });
         }
     }
 }

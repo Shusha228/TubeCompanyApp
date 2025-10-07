@@ -19,7 +19,7 @@ namespace backend.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Order>> CreateOrder([FromBody] CreateOrderRequest request)
+        public async Task<ActionResult<Order>> CreateOrder([FromBody] Models.Order.CreateOrderRequest request)
         {
             try
             {

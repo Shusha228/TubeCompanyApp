@@ -17,7 +17,7 @@ namespace backend.Services
         /// <summary>
         /// Расчет стоимости для номенклатуры
         /// </summary>
-        Task<Models.PriceCalculationResult> CalculatePriceAsync(Models.PriceCalculationRequest request);
+        Task<Models.Nomenclature.PriceCalculationResult> CalculatePriceAsync(Models.Nomenclature.PriceCalculationRequest request);
     }
 
     public class NomenclatureService : INomenclatureService
@@ -206,7 +206,7 @@ namespace backend.Services
         /// <summary>
         /// Расчет стоимости для номенклатуры с учетом скидок
         /// </summary>
-        public async Task<Models.PriceCalculationResult> CalculatePriceAsync(Models.PriceCalculationRequest request)
+        public async Task<Models.Nomenclature.PriceCalculationResult> CalculatePriceAsync(Models.Nomenclature.PriceCalculationRequest request)
         {
             try
             {
@@ -280,7 +280,7 @@ namespace backend.Services
                     convertedQuantity = request.Quantity / nomenclature.Koef;
                 }
 
-                var result = new Models.PriceCalculationResult
+                var result = new Models.Nomenclature.PriceCalculationResult
                 {
                     NomenclatureId = request.NomenclatureId,
                     NomenclatureName = nomenclature.Name,

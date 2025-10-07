@@ -2,13 +2,12 @@ using backend.Models.Entities;
 using backend.Models;
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace backend.Services
 {
     public interface IOrderService
     {
-        Task<Order> CreateOrderAsync(CreateOrderRequest request);
+        Task<Order> CreateOrderAsync(Models.Order.CreateOrderRequest request);
         Task<Order?> GetOrderByIdAsync(string orderId);
         Task<List<Order>> GetUserOrdersAsync(long telegramUserId);
     }
@@ -32,7 +31,7 @@ namespace backend.Services
             _logger = logger;
         }
 
-        public async Task<Order> CreateOrderAsync(CreateOrderRequest request)
+        public async Task<Order> CreateOrderAsync(Models.Order.CreateOrderRequest request)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -42,7 +41,7 @@ namespace backend.Services
 
                 foreach (var requestItem in request.Items)
                 {
-                    var priceResponse = await _nomenclatureService.CalculatePriceAsync(new PriceCalculationRequest
+                    var priceResponse = await _nomenclatureService.CalculatePriceAsync(new Models.Nomenclature.PriceCalculationRequest
                     {
                         NomenclatureId = requestItem.ProductId,
                         StockId = requestItem.StockId,
