@@ -134,18 +134,22 @@ namespace backend.Services
 
                         if (existingPrice != null)
                         {
-                            // Обновляем существующую запись (автоматически исправляем отрицательные цены)
-                            if (update.PriceT.HasValue) existingPrice.PriceT = Math.Abs(update.PriceT.Value);
-                            if (update.PriceT1.HasValue) existingPrice.PriceT1 = Math.Abs(update.PriceT1.Value);
-                            if (update.PriceT2.HasValue) existingPrice.PriceT2 = Math.Abs(update.PriceT2.Value);
-                            if (update.PriceM.HasValue) existingPrice.PriceM = Math.Abs(update.PriceM.Value);
-                            if (update.PriceM1.HasValue) existingPrice.PriceM1 = Math.Abs(update.PriceM1.Value);
-                            if (update.PriceM2.HasValue) existingPrice.PriceM2 = Math.Abs(update.PriceM2.Value);
-                            if (update.PriceLimitT1.HasValue) existingPrice.PriceLimitT1 = Math.Abs(update.PriceLimitT1.Value);
-                            if (update.PriceLimitT2.HasValue) existingPrice.PriceLimitT2 = Math.Abs(update.PriceLimitT2.Value);
-                            if (update.PriceLimitM1.HasValue) existingPrice.PriceLimitM1 = Math.Abs(update.PriceLimitM1.Value);
-                            if (update.PriceLimitM2.HasValue) existingPrice.PriceLimitM2 = Math.Abs(update.PriceLimitM2.Value);
-                            if (update.NDS.HasValue) existingPrice.NDS = update.NDS.Value;
+                            // ПРИМЕНЯЕМ ДЕЛЬТУ к существующим ценам
+                            if (update.PriceT.HasValue) existingPrice.PriceT += update.PriceT.Value;
+                            if (update.PriceT1.HasValue) existingPrice.PriceT1 = (existingPrice.PriceT1 ?? 0) + update.PriceT1.Value;
+                            if (update.PriceT2.HasValue) existingPrice.PriceT2 = (existingPrice.PriceT2 ?? 0) + update.PriceT2.Value;
+                            if (update.PriceM.HasValue) existingPrice.PriceM += update.PriceM.Value;
+                            if (update.PriceM1.HasValue) existingPrice.PriceM1 = (existingPrice.PriceM1 ?? 0) + update.PriceM1.Value;
+                            if (update.PriceM2.HasValue) existingPrice.PriceM2 = (existingPrice.PriceM2 ?? 0) + update.PriceM2.Value;
+                            if (update.PriceLimitT1.HasValue) existingPrice.PriceLimitT1 = (existingPrice.PriceLimitT1 ?? 0) + update.PriceLimitT1.Value;
+                            if (update.PriceLimitT2.HasValue) existingPrice.PriceLimitT2 = (existingPrice.PriceLimitT2 ?? 0) + update.PriceLimitT2.Value;
+                            if (update.PriceLimitM1.HasValue) existingPrice.PriceLimitM1 = (existingPrice.PriceLimitM1 ?? 0) + update.PriceLimitM1.Value;
+                            if (update.PriceLimitM2.HasValue) existingPrice.PriceLimitM2 = (existingPrice.PriceLimitM2 ?? 0) + update.PriceLimitM2.Value;
+                            if (update.NDS.HasValue) existingPrice.NDS = update.NDS.Value; // NDS обычно не дельта
+
+                            // Защита от отрицательных цен после применения дельты
+                            if (existingPrice.PriceT < 0) existingPrice.PriceT = 0;
+                            if (existingPrice.PriceM < 0) existingPrice.PriceM = 0;
 
                             _context.Prices.Update(existingPrice);
                             _logger.LogDebug($"Updated existing price for product {effectiveProductId} at stock {effectiveStockId}");
@@ -154,21 +158,23 @@ namespace backend.Services
                         {
                             // Создаем новую запись (автоматически исправляем отрицательные цены)
                             var newPrice = new Price
-                            {
-                                ID = effectiveProductId,
+                            {   ID = effectiveProductId,
                                 IDStock = effectiveStockId,
-                                PriceT = Math.Abs(update.PriceT ?? 0),
-                                PriceT1 = update.PriceT1.HasValue ? Math.Abs(update.PriceT1.Value) : null,
-                                PriceT2 = update.PriceT2.HasValue ? Math.Abs(update.PriceT2.Value) : null,
-                                PriceM = Math.Abs(update.PriceM ?? 0),
-                                PriceM1 = update.PriceM1.HasValue ? Math.Abs(update.PriceM1.Value) : null,
-                                PriceM2 = update.PriceM2.HasValue ? Math.Abs(update.PriceM2.Value) : null,
-                                PriceLimitT1 = update.PriceLimitT1.HasValue ? Math.Abs(update.PriceLimitT1.Value) : null,
-                                PriceLimitT2 = update.PriceLimitT2.HasValue ? Math.Abs(update.PriceLimitT2.Value) : null,
-                                PriceLimitM1 = update.PriceLimitM1.HasValue ? Math.Abs(update.PriceLimitM1.Value) : null,
-                                PriceLimitM2 = update.PriceLimitM2.HasValue ? Math.Abs(update.PriceLimitM2.Value) : null,
+                                PriceT = update.PriceT ?? 0,
+                                PriceT1 = update.PriceT1,
+                                PriceT2 = update.PriceT2,
+                                PriceM = update.PriceM ?? 0,
+                                PriceM1 = update.PriceM1,
+                                PriceM2 = update.PriceM2,
+                                PriceLimitT1 = update.PriceLimitT1,
+                                PriceLimitT2 = update.PriceLimitT2,
+                                PriceLimitM1 = update.PriceLimitM1,
+                                PriceLimitM2 = update.PriceLimitM2,
                                 NDS = update.NDS ?? 20
                             };
+
+                            if (newPrice.PriceT < 0) newPrice.PriceT = 0;
+                            if (newPrice.PriceM < 0) newPrice.PriceM = 0;
 
                             _context.Prices.Add(newPrice);
                             _logger.LogDebug($"Created new price for product {effectiveProductId} at stock {effectiveStockId}");
@@ -265,39 +271,43 @@ namespace backend.Services
                     if (existingRemnant != null)
                     {
                         // Обновляем через прямой SQL или создаем новый объект
-                        var updatedRemnant = new Remnant
-                        {
-                            ID = effectiveProductId,
-                            IDStock = effectiveStockId,
-                            InStockT = Math.Abs(update.InStockT ?? 0),
-                            InStockM = Math.Abs(update.InStockM ?? 0),
-                            SoonArriveT = update.SoonArriveT.HasValue ? Math.Abs(update.SoonArriveT.Value) : null,
-                            SoonArriveM = update.SoonArriveM.HasValue ? Math.Abs(update.SoonArriveM.Value) : null,
-                            ReservedT = update.ReservedT.HasValue ? Math.Abs(update.ReservedT.Value) : null,
-                            ReservedM = update.ReservedM.HasValue ? Math.Abs(update.ReservedM.Value) : null,
-                            AvgTubeLength = update.AvgTubeLength.HasValue ? Math.Abs(update.AvgTubeLength.Value) : null,
-                            AvgTubeWeight = update.AvgTubeWeight.HasValue ? Math.Abs(update.AvgTubeWeight.Value) : null
-                        };
+                        // ПРИМЕНЯЕМ ДЕЛЬТУ к существующим остаткам
+                        if (update.InStockT.HasValue) existingRemnant.InStockT += update.InStockT.Value;
+                        if (update.InStockM.HasValue) existingRemnant.InStockM += update.InStockM.Value;
+                        if (update.SoonArriveT.HasValue) existingRemnant.SoonArriveT = (existingRemnant.SoonArriveT ?? 0) + update.SoonArriveT.Value;
+                        if (update.SoonArriveM.HasValue) existingRemnant.SoonArriveM = (existingRemnant.SoonArriveM ?? 0) + update.SoonArriveM.Value;
+                        if (update.ReservedT.HasValue) existingRemnant.ReservedT = (existingRemnant.ReservedT ?? 0) + update.ReservedT.Value;
+                        if (update.ReservedM.HasValue) existingRemnant.ReservedM = (existingRemnant.ReservedM ?? 0) + update.ReservedM.Value;
+                        if (update.AvgTubeLength.HasValue) existingRemnant.AvgTubeLength = update.AvgTubeLength.Value; // Средние значения обычно не дельта
+                        if (update.AvgTubeWeight.HasValue) existingRemnant.AvgTubeWeight = update.AvgTubeWeight.Value; // Средние значения обычно не дельта
 
-                        _context.Remnants.Update(updatedRemnant);
+                        // Защита от отрицательных остатков после применения дельты
+                        if (existingRemnant.InStockT < 0) existingRemnant.InStockT = 0;
+                        if (existingRemnant.InStockM < 0) existingRemnant.InStockM = 0;
+
+                        _context.Remnants.Update(existingRemnant);
                         _logger.LogDebug($"Updated existing remnant for product {effectiveProductId} at stock {effectiveStockId}");
                     }
                     else
                     {
-                        // Создаем новую запись
+                        // Для новой записи используем значения как есть (первая дельта становится базовым значением)
                         var newRemnant = new Remnant
                         {
                             ID = effectiveProductId,
                             IDStock = effectiveStockId,
-                            InStockT = Math.Abs(update.InStockT ?? 0),
-                            InStockM = Math.Abs(update.InStockM ?? 0),
-                            SoonArriveT = update.SoonArriveT.HasValue ? Math.Abs(update.SoonArriveT.Value) : null,
-                            SoonArriveM = update.SoonArriveM.HasValue ? Math.Abs(update.SoonArriveM.Value) : null,
-                            ReservedT = update.ReservedT.HasValue ? Math.Abs(update.ReservedT.Value) : null,
-                            ReservedM = update.ReservedM.HasValue ? Math.Abs(update.ReservedM.Value) : null,
-                            AvgTubeLength = update.AvgTubeLength.HasValue ? Math.Abs(update.AvgTubeLength.Value) : null,
-                            AvgTubeWeight = update.AvgTubeWeight.HasValue ? Math.Abs(update.AvgTubeWeight.Value) : null
+                            InStockT = update.InStockT ?? 0,
+                            InStockM = update.InStockM ?? 0,
+                            SoonArriveT = update.SoonArriveT,
+                            SoonArriveM = update.SoonArriveM,
+                            ReservedT = update.ReservedT,
+                            ReservedM = update.ReservedM,
+                            AvgTubeLength = update.AvgTubeLength,
+                            AvgTubeWeight = update.AvgTubeWeight
                         };
+
+                        // Защита от отрицательных остатков для новой записи
+                        if (newRemnant.InStockT < 0) newRemnant.InStockT = 0;
+                        if (newRemnant.InStockM < 0) newRemnant.InStockM = 0;
 
                         _context.Remnants.Add(newRemnant);
                         _logger.LogDebug($"Created new remnant for product {effectiveProductId} at stock {effectiveStockId}");
