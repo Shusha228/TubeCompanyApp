@@ -18,6 +18,11 @@ namespace backend.Data
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<CustomerInfo> CustomerInfos { get; set; }
         public DbSet<TelegramUser> TelegramUsers { get; set; }
+        
+        public DbSet<PriceUpdate> PriceUpdates { get; set; }
+        public DbSet<RemnantUpdate> RemnantUpdates { get; set; }
+        public DbSet<StockUpdate> StockUpdates { get; set; }
+        public DbSet<UpdateLog> UpdateLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,7 +68,7 @@ namespace backend.Data
                     .HasColumnType("decimal(10,2)");
                 entity.Property(e => e.Koef)
                     .HasColumnType("decimal(10,6)");
-                
+
                 entity.HasOne<ProductType>()
                     .WithMany()
                     .HasForeignKey(e => e.IDType)
@@ -113,11 +118,11 @@ namespace backend.Data
             modelBuilder.Entity<Price>(entity =>
             {
                 entity.HasKey(e => new { e.ID, e.IDStock });
-                
+
                 entity.Property(e => e.IDStock)
                     .IsRequired()
                     .HasMaxLength(36);
-                
+
                 entity.Property(e => e.PriceT)
                     .HasColumnType("decimal(18,2)");
                 entity.Property(e => e.PriceT1)
@@ -148,12 +153,12 @@ namespace backend.Data
                     .IsRequired(false);
                 entity.Property(e => e.NDS)
                     .HasColumnType("decimal(5,2)");
-                
+
                 entity.HasOne<Nomenclature>()
                     .WithMany()
                     .HasForeignKey(e => e.ID)
                     .OnDelete(DeleteBehavior.Restrict);
-                
+
                 entity.HasOne<Stock>()
                     .WithMany()
                     .HasForeignKey(e => e.IDStock)
@@ -164,11 +169,11 @@ namespace backend.Data
             modelBuilder.Entity<Remnant>(entity =>
             {
                 entity.HasKey(e => new { e.ID, e.IDStock });
-                
+
                 entity.Property(e => e.IDStock)
                     .IsRequired()
                     .HasMaxLength(36);
-                
+
                 entity.Property(e => e.InStockT)
                     .HasColumnType("decimal(18,2)");
                 entity.Property(e => e.InStockM)
@@ -189,16 +194,16 @@ namespace backend.Data
                     .HasColumnType("decimal(10,2)");
                 entity.Property(e => e.AvgTubeWeight)
                     .HasColumnType("decimal(10,2)");
-                
-                entity.HasOne<Nomenclature>()
-                    .WithMany()
-                    .HasForeignKey(e => e.ID)
-                    .OnDelete(DeleteBehavior.Restrict);
-                
-                entity.HasOne<Stock>()
-                    .WithMany()
-                    .HasForeignKey(e => e.IDStock)
-                    .OnDelete(DeleteBehavior.Restrict);
+
+                // entity.HasOne<Nomenclature>()
+                //     .WithMany()
+                //     .HasForeignKey(e => e.ID)
+                //     .OnDelete(DeleteBehavior.Restrict);
+
+                // entity.HasOne<Stock>()
+                //     .WithMany()
+                //     .HasForeignKey(e => e.IDStock)
+                //     .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Order
@@ -206,14 +211,14 @@ namespace backend.Data
             modelBuilder.Entity<Order>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                
+
                 entity.Property(e => e.Id)
                     .IsRequired()
                     .HasMaxLength(8); // Для ID формата "A1B2C3D4"
-                
+
                 entity.Property(e => e.TelegramUserId)
                     .IsRequired();
-                
+
                 entity.Property(e => e.FirstName)
                     .IsRequired()
                     .HasMaxLength(50);
@@ -238,10 +243,10 @@ namespace backend.Data
                     .IsRequired();
                 entity.Property(e => e.UpdatedAt)
                     .IsRequired(false);
-                
+
                 entity.Property(e => e.AdminNotified)
                     .IsRequired();
-                
+
                 // Owned types для OrderCartItem
                 entity.OwnsMany(e => e.Items, owned =>
                 {
@@ -269,35 +274,35 @@ namespace backend.Data
             modelBuilder.Entity<CartItem>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.ProductId, e.StockId, e.IsInMeters });
-                
+
                 entity.Property(e => e.UserId)
                     .IsRequired();
-                
+
                 entity.Property(e => e.ProductId)
                     .IsRequired();
-                
+
                 entity.Property(e => e.ProductName)
                     .IsRequired()
                     .HasMaxLength(500);
-                
+
                 entity.Property(e => e.Quantity)
                     .HasColumnType("decimal(18,2)")
                     .IsRequired();
-                
+
                 entity.Property(e => e.IsInMeters)
                     .IsRequired();
-                
+
                 entity.Property(e => e.FinalPrice)
                     .HasColumnType("decimal(18,2)")
                     .IsRequired();
-                
+
                 entity.Property(e => e.UnitPrice)
                     .HasColumnType("decimal(18,2)")
                     .IsRequired();
-                
+
                 entity.Property(e => e.AddedAt)
                     .IsRequired();
-                
+
                 entity.Property(e => e.UpdatedAt)
                     .IsRequired();
 
@@ -306,10 +311,10 @@ namespace backend.Data
                     .WithMany()
                     .HasForeignKey(e => e.ProductId)
                     .OnDelete(DeleteBehavior.Cascade);
-                
+
                 entity.HasIndex(e => e.UserId)
                     .HasDatabaseName("IX_CartItem_UserId");
-                
+
                 entity.HasIndex(e => e.ProductId)
                     .HasDatabaseName("IX_CartItem_ProductId");
             });
@@ -318,26 +323,26 @@ namespace backend.Data
             modelBuilder.Entity<CustomerInfo>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                
+
                 entity.Property(e => e.UserId)
                     .IsRequired();
-                
+
                 entity.Property(e => e.FirstName)
                     .IsRequired()
                     .HasMaxLength(50);
-                
+
                 entity.Property(e => e.LastName)
                     .IsRequired()
                     .HasMaxLength(50);
-                
+
                 entity.Property(e => e.Inn)
                     .IsRequired()
                     .HasMaxLength(20);
-                
+
                 entity.Property(e => e.Phone)
                     .IsRequired()
                     .HasMaxLength(20);
-                
+
                 entity.Property(e => e.Email)
                     .IsRequired()
                     .HasMaxLength(100);
@@ -357,23 +362,23 @@ namespace backend.Data
             modelBuilder.Entity<Nomenclature>()
                 .HasIndex(e => e.IDType)
                 .HasDatabaseName("IX_Nomenclature_IDType");
-                
+
             modelBuilder.Entity<Price>()
                 .HasIndex(e => e.IDStock)
                 .HasDatabaseName("IX_Price_IDStock");
-                
+
             modelBuilder.Entity<Remnant>()
                 .HasIndex(e => e.IDStock)
                 .HasDatabaseName("IX_Remnant_IDStock");
-                
+
             modelBuilder.Entity<Order>()
                 .HasIndex(e => e.TelegramUserId)
                     .HasDatabaseName("IX_Order_TelegramUserId");
-                
+
             modelBuilder.Entity<Order>()
                 .HasIndex(e => e.CreatedAt)
                 .HasDatabaseName("IX_Order_CreatedAt");
-            
+
             modelBuilder.Entity<TelegramUser>(entity =>
             {
                 entity.HasKey(e => e.TelegramUserId);
@@ -384,10 +389,45 @@ namespace backend.Data
                 entity.Property(e => e.Phone).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.Username).HasMaxLength(50);
                 entity.Property(e => e.Status).HasMaxLength(20);
-                
+
                 entity.HasIndex(e => e.Inn).HasDatabaseName("IX_TelegramUser_Inn");
                 entity.HasIndex(e => e.Email).HasDatabaseName("IX_TelegramUser_Email");
                 entity.HasIndex(e => e.Phone).HasDatabaseName("IX_TelegramUser_Phone");
+            });
+
+            // PriceUpdate
+            modelBuilder.Entity<PriceUpdate>(entity =>
+            {
+                entity.HasKey(e => e.ID);
+                entity.Property(e => e.StockId).IsRequired().HasMaxLength(36);
+                entity.HasIndex(e => new { e.ProductId, e.StockId });
+                entity.HasIndex(e => e.IsProcessed);
+            });
+
+            // RemnantUpdate
+            modelBuilder.Entity<RemnantUpdate>(entity =>
+            {
+                entity.HasKey(e => e.ID);
+                entity.Property(e => e.StockId).IsRequired().HasMaxLength(36);
+                entity.HasIndex(e => new { e.ProductId, e.StockId });
+                entity.HasIndex(e => e.IsProcessed);
+            });
+
+            // StockUpdate
+            modelBuilder.Entity<StockUpdate>(entity =>
+            {
+                entity.HasKey(e => e.ID);
+                entity.Property(e => e.StockId).IsRequired().HasMaxLength(36);
+                entity.HasIndex(e => e.StockId);
+                entity.HasIndex(e => e.IsProcessed);
+            });
+
+            // UpdateLog
+            modelBuilder.Entity<UpdateLog>(entity =>
+            {
+                entity.HasKey(e => e.ID);
+                entity.HasIndex(e => e.Timestamp);
+                entity.HasIndex(e => e.EntityType);
             });
         }
     }

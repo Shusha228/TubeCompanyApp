@@ -50,10 +50,10 @@ namespace backend.Services
             try
             {
                 // Проверка существования пользователя
-                if (!await ValidateUserExistsAsync(userId))
-                {
-                    throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе. Пожалуйста, заполните информацию о себе перед добавлением товаров в корзину.");
-                }
+                // if (!await ValidateUserExistsAsync(userId))
+                // {
+                //     throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе. Пожалуйста, заполните информацию о себе перед добавлением товаров в корзину.");
+                // }
 
                 var stockExists = await _context.Stocks
                     .AnyAsync(s => s.IDStock == stockId);

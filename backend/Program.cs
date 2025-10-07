@@ -36,7 +36,6 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy.WithOrigins("http://localhost:3000", "http://localhost:8080")
-        .AllowAnyOrigin()
         .AllowAnyMethod()
         .AllowAnyHeader();
     });
@@ -54,6 +53,8 @@ builder.Services.AddScoped<RemnantImporter>();
 builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<ITelegramUserService, TelegramUserService>();
+builder.Services.AddScoped<IUpdateService, UpdateService>();
+
 builder.Services.AddSingleton<ITelegramBotClient>(provider =>
 {
     var configuration = provider.GetRequiredService<IConfiguration>();
