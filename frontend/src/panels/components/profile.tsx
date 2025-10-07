@@ -22,7 +22,10 @@ export const ProfilePanel = () => {
       <div className="flex pt-6 gap-4 w-full bg-white rounded-b-[12px] pb-4.5">
         <div className="flex w-full gap-4 items-center px-4">
           <Avatar className="w-24 h-24">
-            <AvatarImage src={user.photo}></AvatarImage>
+            <AvatarImage
+              className="rounded-full"
+              src={user.photo}
+            ></AvatarImage>
             <AvatarFallback className="text-lg">{fallback}</AvatarFallback>
           </Avatar>
           <div className="w-auto max-w-full">
