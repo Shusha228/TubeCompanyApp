@@ -1,13 +1,29 @@
 ﻿version: '3.8'
 
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: tubecompany-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - tubecompany-network
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: tubecompany-backend
-    ports:
-      - "8080:8080"
+    # УБИРАЕМ проброс портов наружу
+    # ports:
+    #   - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
@@ -16,13 +32,15 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_HOST=postgres  # Меняем на имя сервиса
+      - POSTGRES_PORT=5432
     volumes:
       - ./backend/Data:/app/Data
     networks:
       - tubecompany-network
     restart: unless-stopped
+    expose:
+      - "8080"  # Делаем порт доступным только внутри сети
 
   postgres:
     image: postgres:15
@@ -34,8 +52,9 @@ services:
       PGDATA: /var/lib/postgresql/data
     networks:
       - tubecompany-network
-    ports:
-      - "5433:5432"
+    # УБИРАЕМ проброс портов наружу для безопасности
+    # ports:
+    #   - "5433:5432"
     volumes:
       - ./db:/var/lib/postgresql/data
     restart: unless-stopped
@@ -44,19 +63,24 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    expose:
+      - "5432"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: tubecompany-frontend
-    ports:
-      - "3000:3000"
+    # УБИРАЕМ проброс портов наружу
+    # ports:
+    #   - "3000:3000"
     depends_on:
       - backend
     networks:
       - tubecompany-network
     restart: unless-stopped
+    expose:
+      - "3000"
 
 networks:
   tubecompany-network:
