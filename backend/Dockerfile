@@ -11,7 +11,6 @@ RUN dotnet restore
 
 
 COPY . .
-RUN dotnet ef migrations add InitialCreate
 RUN dotnet build -c Release --no-restore
 RUN dotnet publish -c Release -o /app/publish --no-restore --no-build
 
