@@ -16,6 +16,8 @@ namespace backend.Services
         Task<CartItem?> UpdateCartItemQuantityAsync(int userId, string stockId, int productId, decimal newQuantity);
         Task<decimal> GetCartTotalAsync(int userId);
         Task<int> GetCartItemsCountAsync(int userId);
+        Task<List<CartItem>> SearchInCartAsync(int userId, string searchTerm);
+        Task<CartPaginationResponse> SearchInCartPagedAsync(int userId, string searchTerm, int from = 0, int to = 20);
     }
 
     public class CartService : ICartService
@@ -336,6 +338,97 @@ namespace backend.Services
                 throw;
             }
         }
+        
+        public async Task<List<CartItem>> SearchInCartAsync(int userId, string searchTerm)
+    {
+        try
+        {
+            if (!await ValidateUserExistsAsync(userId))
+            {
+                throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+            }
+
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return await GetCartItemsAsync(userId);
+            }
+
+            var term = searchTerm.ToLower().Trim();
+            
+            return await _context.CartItems
+                .Where(c => c.UserId == userId &&
+                           (c.ProductName.ToLower().Contains(term) ||
+                            c.ProductId.ToString().Contains(term) ||
+                            c.StockId.ToLower().Contains(term) ||
+                            (c.IsInMeters ? "метры" : "тонны").Contains(term)))
+                .OrderByDescending(c => c.AddedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error searching in cart for user {userId} with term: {searchTerm}");
+            throw;
+        }
+    }
+
+    public async Task<CartPaginationResponse> SearchInCartPagedAsync(int userId, string searchTerm, int from = 0, int to = 20)
+    {
+        try
+        {
+            if (!await ValidateUserExistsAsync(userId))
+            {
+                throw new InvalidOperationException($"Пользователь с ID '{userId}' не найден в системе.");
+            }
+
+            if (from < 0) throw new ArgumentException("From cannot be negative");
+            if (to <= from) throw new ArgumentException("To must be greater than from");
+            if (to - from > 100) throw new ArgumentException("Page size cannot exceed 100 items");
+
+            var pageSize = to - from;
+            var currentPage = from / pageSize;
+
+            var query = _context.CartItems
+                .Where(c => c.UserId == userId);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var term = searchTerm.ToLower().Trim();
+                query = query.Where(c => 
+                    c.ProductName.ToLower().Contains(term) ||
+                    c.ProductId.ToString().Contains(term) ||
+                    c.StockId.ToLower().Contains(term) ||
+                    (c.IsInMeters ? "метры" : "тонны").Contains(term));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(c => c.AddedAt)
+                .Skip(from)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            return new CartPaginationResponse
+            {
+                Items = items,
+                Meta = new PaginationMeta
+                {
+                    TotalPages = totalPages,
+                    Page = currentPage,
+                    PageLimit = pageSize,
+                    TotalCount = totalCount,
+                    SearchTerm = searchTerm
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error searching in cart paged for user {userId} with term: {searchTerm}");
+            throw;
+        }
+    }
     }
 
     public class CartPaginationResponse
@@ -350,5 +443,6 @@ namespace backend.Services
         public int Page { get; set; }
         public int PageLimit { get; set; }
         public int TotalCount { get; set; }
+        public string? SearchTerm { get; set; }
     }
 }
