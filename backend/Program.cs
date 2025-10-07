@@ -52,6 +52,7 @@ builder.Services.AddScoped<ProductTypeImporter>();
 builder.Services.AddScoped<RemnantImporter>();
 builder.Services.AddScoped<ITelegramNotificationService, TelegramNotificationService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<ITelegramUserService, TelegramUserService>();
 builder.Services.AddScoped<IUpdateService, UpdateService>();
 builder.Services.AddSingleton<ITelegramBotClient>(provider =>
 {
