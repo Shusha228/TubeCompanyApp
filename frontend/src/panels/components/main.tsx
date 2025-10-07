@@ -201,7 +201,7 @@ const ifNullStringReturnUndefined = (value: string) =>
   value == "__null__" ? undefined : value;
 
 export const MainPanel = () => {
-  const [category, setCategory] = useState<string>();
+  const [category, _setCategory] = useState<string>();
   const [activeCheckboxes, setActiveCheckBoxes] = useState<string[]>([]);
   const [citySearch, _setCitySearch] = useState<string>("");
   const [, setActiveCity] = useState<City>();
@@ -223,6 +223,14 @@ export const MainPanel = () => {
 
   const setSteelGrades = (value: string) =>
     _setSteelGrades(ifNullStringReturnUndefined(value));
+
+  const setCategory = (value?: string) => {
+    _setCategory(value);
+    _setGost(undefined);
+    _setDiameter(undefined);
+    _setPipeWallThicknesses(undefined);
+    _setSteelGrades(undefined);
+  };
 
   const findedCities = useMemo(
     () =>
