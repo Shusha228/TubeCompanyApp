@@ -1,8 +1,13 @@
+import { getURL } from "@/api";
 import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import type { Item } from "@/models/item";
 import { useFetchFavorites } from "@/providers/favorites";
 import { useModalItem } from "@/providers/modal-item";
-/*
+import { useUser } from "@/providers/user";
+
 const addItemInCart = (userId: number, item: Item) => {
   fetch(getURL(`/Cart/${userId}/items`), {
     method: "POST",
@@ -16,11 +21,12 @@ const addItemInCart = (userId: number, item: Item) => {
       finalPrice: 2000,
     }),
   });
-};*/
+};
 
 export const ItemModal = () => {
   const { hasInFavorite, toggleFavorite } = useFetchFavorites();
   const { data } = useModalItem();
+  const { telegramId } = useUser();
 
   if (data === undefined) {
     return <Spinner />;
@@ -90,12 +96,27 @@ export const ItemModal = () => {
             </a>
           </p>
           <div className="w-full flex flex-col gap-2 px-2">
-            <Button
-              size="lg"
-              className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
-            >
-              Заказать
-            </Button>
+            <Drawer>
+              <DrawerTrigger>
+                <Button
+                  size="lg"
+                  className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
+                >
+                  Заказать
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <Input placeholder="Введите длину, м" />
+                <Input placeholder="Введите длину, м" />
+                <Button
+                  size="lg"
+                  className="bg-[#EC6608] hover:bg-[#EC6608] active:scale-98"
+                  onClick={() => addItemInCart(telegramId, data)}
+                >
+                  Добавить в корзину
+                </Button>
+              </DrawerContent>
+            </Drawer>
             <Button
               variant="secondary"
               size="lg"

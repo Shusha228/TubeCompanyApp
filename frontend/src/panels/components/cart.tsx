@@ -23,11 +23,20 @@ export const ShoppingCartList = () => {
   });
   return (
     <>
-      {data.map((el) => (
-        <ItemCardForShoppingCart key={el.productId} />
+      {data.map((item) => (
+        <ItemCardForShoppingCart item={item} key={item.productId} />
       ))}
-      {isLoading && <Spinner />}
-      {!isLoading && hasNext && <div ref={observableElement}></div>}
+      {isLoading && (
+        <div className="w-full flex justify-center">
+          <Spinner />
+        </div>
+      )}
+      {data.length == 0 && (
+        <div className="w-full text-center">Здесь пока пусто!</div>
+      )}
+      {data.length >= 20 && !isLoading && hasNext && (
+        <div ref={observableElement}></div>
+      )}
     </>
   );
 };
