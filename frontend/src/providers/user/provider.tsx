@@ -14,12 +14,14 @@ const ADMIN_ARRAY =
 console.log(ADMIN_ARRAY);
 export const UserProvider = ({ children }: { children: JSX.Element }) => {
   const _user = WebApp.initDataUnsafe.user;
+
   const [user, setUser] = useState<User>({
     telegramId: _user !== undefined ? _user.id : 1,
     name: [_user?.first_name, _user?.last_name]
       .filter((el) => el !== undefined)
       .join(" "),
-    role: UserRole.Admin,
+    role:
+      _user && ADMIN_ARRAY.includes(_user?.id) ? UserRole.Admin : UserRole.User,
     photo: _user?.photo_url,
   });
 
@@ -53,6 +55,8 @@ export const UserProvider = ({ children }: { children: JSX.Element }) => {
       });
     }
   }, [_user]);
+
+  if (_user === undefined) return <></>;
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };
