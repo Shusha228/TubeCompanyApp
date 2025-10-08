@@ -14,6 +14,17 @@ export const FetchAllItemsProvider = ({
   const [filters, _setFilters] = useState<FilterSearch>({});
   const abortRef = useRef<AbortController | null>(null);
 
+  const deleteItem = (item: Item) => {
+    fetch(getURL(`Nomenclature/${item.id}`), {
+      method: "DELETE",
+    });
+    setData((e) => e.filter((el) => el.id != item.id));
+  };
+
+  const addItem = (item: Item) => {
+    setData((prev) => [item, ...prev]);
+  };
+
   const fetchItems = useCallback(async () => {
     if (abortRef.current) {
       abortRef.current.abort();
@@ -56,6 +67,10 @@ export const FetchAllItemsProvider = ({
     }
   }, [filters.search]);
 
+  const refreshItems = useCallback(() => {
+    fetchItems();
+  }, [fetchItems]);
+
   useEffect(() => {
     fetchItems();
     return () => {
@@ -68,7 +83,9 @@ export const FetchAllItemsProvider = ({
   }, []);
 
   return (
-    <FetchAllItemsContext.Provider value={{ data, isLoading, setFilters }}>
+    <FetchAllItemsContext.Provider
+      value={{ data, isLoading, setFilters, deleteItem, addItem, refreshItems }}
+    >
       {children}
     </FetchAllItemsContext.Provider>
   );

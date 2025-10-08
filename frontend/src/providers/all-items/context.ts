@@ -6,6 +6,9 @@ export interface FetchAllItems {
   isLoading: boolean;
   setFilters: (filters: FilterSearch) => void;
   data: Item[];
+  deleteItem: (item: Item) => void;
+  addItem: (item: Item) => void;
+  refreshItems: () => void;
 }
 
 export const FetchAllItemsContext = createContext({} as FetchAllItems);

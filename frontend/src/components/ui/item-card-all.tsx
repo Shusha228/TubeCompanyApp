@@ -1,7 +1,9 @@
 import { Modal } from "@/modals/models/modal";
 import type { Item as ItemType } from "@/models/item";
 import { useActiveModal } from "@/providers/active-modal";
+import { useFetchAllItems } from "@/providers/all-items";
 import { useModalItem } from "@/providers/modal-item";
+import { useUpdateItem } from "@/providers/update-item";
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "./button";
 import {
@@ -13,13 +15,21 @@ import {
 import { Item, ItemContent, ItemMedia, ItemTitle } from "./item";
 
 export const ItemCardForAll = ({ item }: { item: ItemType }) => {
+  const { deleteItem } = useFetchAllItems();
   const activeModal = useActiveModal();
   const modalItem = useModalItem();
+  const updateItem = useUpdateItem();
 
   const goToItem = () => {
     modalItem.showModal(item.id);
     activeModal.showModal(Modal.Item);
   };
+
+  const goToUpdate = () => {
+    updateItem.setItem(item);
+    activeModal.showModal(Modal.UpdateItem);
+  };
+
   return (
     <Item
       variant="outline"
@@ -51,8 +61,15 @@ export const ItemCardForAll = ({ item }: { item: ItemType }) => {
           <DropdownMenuItem onClick={goToItem}>
             Перейти к товару
           </DropdownMenuItem>
-          <DropdownMenuItem>Редактировать</DropdownMenuItem>
-          <DropdownMenuItem variant="destructive">Удалить</DropdownMenuItem>
+          <DropdownMenuItem onClick={goToUpdate}>
+            Редактировать
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => deleteItem(item)}
+          >
+            Удалить
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </Item>
