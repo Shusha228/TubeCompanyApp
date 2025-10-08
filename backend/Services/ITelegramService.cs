@@ -37,7 +37,7 @@ namespace backend.Services
                     if (update.Message.Text == "/start")
                     {
                         var baseUrl = _configuration["App:BaseUrl"];
-                        var webAppUrl = $"{baseUrl}/miniapp";
+                        var webAppUrl = "https://verybaddomain.site";
                         
                         _logger.LogInformation($"Sending start message with webapp URL: {webAppUrl}");
 
