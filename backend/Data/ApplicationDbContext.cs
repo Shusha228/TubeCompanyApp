@@ -160,12 +160,12 @@ namespace backend.Data
                 entity.HasOne<Nomenclature>()
                     .WithMany()
                     .HasForeignKey(e => e.ID)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne<Stock>()
                     .WithMany()
                     .HasForeignKey(e => e.IDStock)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Remnant (составной ключ) - УПРОЩЕННАЯ КОНФИГУРАЦИЯ БЕЗ НАВИГАЦИОННЫХ СВОЙСТВ
